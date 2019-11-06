@@ -1,2 +1,2 @@
 # CeneoService
-This is small application for Software Engineering Course
+This is small application for filtering ceneo.pl service offers

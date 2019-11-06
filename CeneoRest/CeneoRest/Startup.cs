@@ -41,7 +41,8 @@ namespace CeneoRest
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            app.UseCors(cors => cors.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            //app.UseHttpsRedirection();
             app.UseMvc();
         }
     }
