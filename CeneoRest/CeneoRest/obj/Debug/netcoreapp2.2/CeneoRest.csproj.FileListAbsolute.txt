@@ -1,0 +1,14 @@
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.csproj.CoreCompileInputs.cache
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.AssemblyInfoInputs.cache
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.AssemblyInfo.cs
+D:\Repo\CeneoService\CeneoRest\CeneoRest\bin\Debug\netcoreapp2.2\CeneoRest.deps.json
+D:\Repo\CeneoService\CeneoRest\CeneoRest\bin\Debug\netcoreapp2.2\CeneoRest.runtimeconfig.json
+D:\Repo\CeneoService\CeneoRest\CeneoRest\bin\Debug\netcoreapp2.2\CeneoRest.runtimeconfig.dev.json
+D:\Repo\CeneoService\CeneoRest\CeneoRest\bin\Debug\netcoreapp2.2\CeneoRest.dll
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.csprojAssemblyReference.cache
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.RazorAssemblyInfo.cache
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.RazorAssemblyInfo.cs
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.RazorTargetAssemblyInfo.cache
+D:\Repo\CeneoService\CeneoRest\CeneoRest\bin\Debug\netcoreapp2.2\CeneoRest.pdb
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.dll
+D:\Repo\CeneoService\CeneoRest\CeneoRest\obj\Debug\netcoreapp2.2\CeneoRest.pdb
