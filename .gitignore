@@ -1,4 +1,5 @@
-CeneoRest/CeneoRest/bin
-CeneoRest/CeneoRest/obj
-/node_modules
-.vs
+bin/
+obj/
+.vs/
+
+node_modules/
