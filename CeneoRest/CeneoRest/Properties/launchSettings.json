@@ -19,7 +19,7 @@
     },
     "CeneoRest": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "api/ceneo",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
