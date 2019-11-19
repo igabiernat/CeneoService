@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace CeneoRest
 {
@@ -18,6 +19,10 @@ namespace CeneoRest
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.RollingFile("log-{Date}.txt")
+                .CreateLogger();
         }
 
         public IConfiguration Configuration { get; }
