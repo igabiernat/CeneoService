@@ -4,11 +4,15 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { CeneoComponent } from './ceneo/ceneo.component';
+import { HeaderComponent } from './header/header.component';
+import { FooterComponent } from './footer/footer.component';
 
 @NgModule({
    declarations: [
       AppComponent,
-      CeneoComponent
+      CeneoComponent,
+      HeaderComponent,
+      FooterComponent
    ],
    imports: [
       BrowserModule,

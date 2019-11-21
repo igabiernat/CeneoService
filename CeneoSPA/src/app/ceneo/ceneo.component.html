@@ -1,5 +1,46 @@
-<div>ceneo works!
-<p *ngFor="let value of ceneoApiInfo">
-  {{value}}
-</p>
+<div>
+    <div class="box">
+        <label class="label">Search</label>
+        <div class="control">
+          <p class="note">How many products are you looking for?</p>
+          <div class="select" >
+            <select #select >
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+            </select>
+          </div>
+        </div>
+        <ng-template #two>
+          <p class="note">First product</p>
+          <div class="control">
+            <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
+            {{input}}
+            
+          </div>
+          <p class="help">This is a help text</p>
+        </ng-template>  
+        <ng-template #three>
+            <p class="note">Second product</p>
+            <div class="control">
+              <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
+              {{input}}
+              
+            </div>
+            <p class="help">This is a help text</p>
+            <p class="note">Third product</p>
+            <div class="control">
+              <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
+              {{input}}
+              
+            </div>
+            <p class="help">This is a help text</p>
+        </ng-template> 
+    </div>
+  
+  <p *ngFor="let value of ceneoApiInfo">
+    {{value}}
+  </p>
+
 </div>
+

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { AppComponent } from "src/app/app.component";
 
 @Component({
   selector: 'app-ceneo',
@@ -8,6 +9,9 @@ import { HttpClient } from '@angular/common/http';
 })
 export class CeneoComponent implements OnInit {
   ceneoApiInfo: any;
+  public input = " ";
+  
+  
 
   constructor(private http: HttpClient) { }
 
@@ -22,4 +26,7 @@ export class CeneoComponent implements OnInit {
       console.log(error);
     });
   }
+
+
+  onEnter (value: string) {this.input = value;}
 }
