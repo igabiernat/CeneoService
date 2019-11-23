@@ -10,12 +10,21 @@ import { AppComponent } from "src/app/app.component";
 export class CeneoComponent implements OnInit {
   ceneoApiInfo: any;
   input = [];  
+  public search1 = true;
+  public submit = false;
+
+ 
+  onClickMe(){
+    this.search1 = false;
+    this.submit = true;
+  }
   
 
   constructor(private http: HttpClient) { 
     this.input = [];
   }
-
+  //TODO: jeden produkt do jednej zmiennej
+  //czy nazwy produktow do zmiennej itd.
   ngOnInit() {
     this.getCeneoApiInfo();
   }

@@ -13,16 +13,16 @@ export class AppComponent{
   public submit = false;
 
  
-  onClickMe(){
+  /**onClickMe(){
     this.search1 = false;
     this.submit = true;
-  }
+  }*/
   onClickMeBack(){
     this.search1 = true;
     this.submit = false;
   }
 
-
+  
 
 /**   onClickMe1(){
     this.search1= true;

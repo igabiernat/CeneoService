@@ -2,10 +2,15 @@
     <div class="box">
         <label class="label">Search</label>
         
-          <p class="note">First product</p>
-          <div class="control">
-            <input #box1 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box1.value)">
-            
+          
+          <div class="box">
+              <p class="note">First product</p>
+            <div class="field has-addons">
+              <input #box1 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box1.value)">
+              <p class="control">
+                  <input class="input" type="number" placeholder="no. of products">
+              </p>
+            </div>
             <div class="field has-addons">
                 <p class="control">
                     <input class="input" type="number" placeholder="min. price">
@@ -17,9 +22,15 @@
             
           </div>
         
-          <p class="note">Second product</p>
-          <div class="control">
-            <input #box2 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box2.value)">
+          
+          <div class="box">
+              <p class="note">Second product</p>
+              <div class="field has-addons">
+                  <input #box2 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box2.value)">
+                  <p class="control">
+                      <input class="input" type="number" placeholder="no. of products">
+                  </p>
+              </div>
             <div class="field has-addons">
                 <p class="control">
                     <input class="input" type="number" placeholder="min. price">
@@ -31,9 +42,15 @@
             
           </div>
           
-          <p class="note">Third product</p>
-          <div class="control">
-            <input #box3 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box3.value)">
+          
+          <div class="box">
+              <p class="note">Third product</p>
+              <div class="field has-addons">
+                  <input #box3 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box3.value)">
+                  <p class="control">
+                      <input class="input" type="number" placeholder="no. of products">
+                  </p>
+              </div>
             <div class="field has-addons">
                 <p class="control">
                     <input class="input" type="number" placeholder="min. price">
@@ -44,9 +61,15 @@
             </div>
               
           </div>
-          <p class="note">Fourth product</p>
-          <div class="control">
-            <input #box4 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box4.value)">
+          
+          <div class="box">
+              <p class="note">Fourth product</p>
+              <div class="field has-addons">
+                  <input #box4 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box4.value)">
+                  <p class="control">
+                      <input class="input" type="number" placeholder="no. of products">
+                  </p>
+              </div>
             <div class="field has-addons">
                 <p class="control">
                     <input class="input" type="number" placeholder="min. price">
@@ -57,9 +80,15 @@
             </div>
               
           </div>
-          <p class="note">Fifth product</p>
-          <div class="control">
-            <input #box5 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box5.value)">
+          
+          <div class="box">
+              <p class="note">Fifth product</p>
+              <div class="field has-addons">
+                  <input #box5 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box5.value)">
+                  <p class="control">
+                      <input class="input" type="number" placeholder="no. of products">
+                  </p>
+              </div>
             <div class="field has-addons">
                 <p class="control">
                     <input class="input" type="number" placeholder="min. price">
@@ -79,26 +108,12 @@
                     The best saller rating
                   </label>
                 </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                  <label class="checkbox">
-                    <input type="checkbox">
-                    The lowest price of products
-                  </label>
-                </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                  <label class="checkbox">
-                    <input type="checkbox">
-                    The lowest price of delivery
-                  </label>
-                </div>
-            </div>
+            </div>       
+            
+              <a class="button is-focused" (click)="onClickMe()">Submit</a>
+                
+            
           </div> 
-
-        
     </div>
   
   <p *ngFor="let value of ceneoApiInfo">
@@ -107,6 +122,7 @@
   <p *ngFor="let v of input">
     {{v}}
   </p>
+  
 
 </div>
 
