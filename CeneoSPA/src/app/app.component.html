@@ -1,4 +1,39 @@
-<div>
-  <h1>CENEO APP</h1>
-  <app-ceneo></app-ceneo>
-</div>
+<app-header></app-header>
+  <div>
+      <div class="tabs is-centered is-boxed is-medium">
+          <ul>
+            <li [class.is-active] = "search1" (click)="onClickMe1()">
+              <a>
+                <span><i class="fas fa-image" aria-hidden="true"></i></span>
+                <span>Step 1: Searching</span>
+              </a>
+            </li>
+            <!-- <li [class.is-active] = "search2" (click)="onClickMe2()">
+              <a>
+                <span><i class="fas fa-music" aria-hidden="true"></i></span>
+                <span>Search2</span>
+              </a>
+            </li> -->
+            <li [class.is-active] = "submit" >
+                <a>
+                  <span><i class="fas fa-music" aria-hidden="true"></i></span>
+                  <span>Step 2: Results</span>
+                </a>
+            </li>
+          </ul>
+        </div>
+        <div *ngIf="search1">
+            <app-ceneo ></app-ceneo>
+
+        </div>
+        <div *ngIf="submit">
+            <div class="field">
+                <label class="label">Results</label>
+            </div>
+            <div class="box">
+                <a class="button is-focused" (click)="onClickMeBack()">Back</a>
+                
+            </div>
+        </div>
+  </div>
+<app-footer></app-footer>
