@@ -1,45 +1,111 @@
 <div>
     <div class="box">
         <label class="label">Search</label>
-        <div class="control">
-          <p class="note">How many products are you looking for?</p>
-          <div class="select" >
-            <select #select >
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
-            </select>
-          </div>
-        </div>
-        <ng-template #two>
+        
           <p class="note">First product</p>
           <div class="control">
-            <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
-            {{input}}
+            <input #box1 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box1.value)">
+            
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="number" placeholder="min. price">
+                </p>
+                <p class="control">
+                    <input class="input" type="number" placeholder="max. price">
+                 </p>
+            </div>
             
           </div>
-          <p class="help">This is a help text</p>
-        </ng-template>  
-        <ng-template #three>
-            <p class="note">Second product</p>
-            <div class="control">
-              <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
-              {{input}}
-              
+        
+          <p class="note">Second product</p>
+          <div class="control">
+            <input #box2 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box2.value)">
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="number" placeholder="min. price">
+                </p>
+                <p class="control">
+                    <input class="input" type="number" placeholder="max. price">
+                 </p>
             </div>
-            <p class="help">This is a help text</p>
-            <p class="note">Third product</p>
-            <div class="control">
-              <input #box class="input" type="text" placeholder="Text input" (keyup.enter)="onEnter(box.value)">
-              {{input}}
-              
+            
+          </div>
+          
+          <p class="note">Third product</p>
+          <div class="control">
+            <input #box3 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box3.value)">
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="number" placeholder="min. price">
+                </p>
+                <p class="control">
+                    <input class="input" type="number" placeholder="max. price">
+                 </p>
             </div>
-            <p class="help">This is a help text</p>
-        </ng-template> 
+              
+          </div>
+          <p class="note">Fourth product</p>
+          <div class="control">
+            <input #box4 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box4.value)">
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="number" placeholder="min. price">
+                </p>
+                <p class="control">
+                    <input class="input" type="number" placeholder="max. price">
+                 </p>
+            </div>
+              
+          </div>
+          <p class="note">Fifth product</p>
+          <div class="control">
+            <input #box5 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box5.value)">
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="number" placeholder="min. price">
+                </p>
+                <p class="control">
+                    <input class="input" type="number" placeholder="max. price">
+                 </p>
+            </div>
+              
+          </div>
+          <div class ="box">
+            <p class="label">About whole search:</p>
+            <div class="field">
+                <div class="control">
+                  <label class="checkbox">
+                    <input type="checkbox">
+                    The best saller rating
+                  </label>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                  <label class="checkbox">
+                    <input type="checkbox">
+                    The lowest price of products
+                  </label>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                  <label class="checkbox">
+                    <input type="checkbox">
+                    The lowest price of delivery
+                  </label>
+                </div>
+            </div>
+          </div> 
+
+        
     </div>
   
   <p *ngFor="let value of ceneoApiInfo">
     {{value}}
+  </p>
+  <p *ngFor="let v of input">
+    {{v}}
   </p>
 
 </div>

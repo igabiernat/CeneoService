@@ -10,7 +10,6 @@ import { CeneoComponent } from "src/app/ceneo/ceneo.component";
 export class AppComponent{
   title = 'CeneoSPA';
   public search1 = true;
-  public search2 = false;
   public submit = false;
 
  

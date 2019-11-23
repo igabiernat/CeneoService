@@ -9,11 +9,12 @@ import { AppComponent } from "src/app/app.component";
 })
 export class CeneoComponent implements OnInit {
   ceneoApiInfo: any;
-  public input = " ";
-  
+  input = [];  
   
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) { 
+    this.input = [];
+  }
 
   ngOnInit() {
     this.getCeneoApiInfo();
@@ -28,5 +29,5 @@ export class CeneoComponent implements OnInit {
   }
 
 
-  onEnter (value: string) {this.input = value;}
+  onEnter (value: string) {this.input.push(value);}
 }
