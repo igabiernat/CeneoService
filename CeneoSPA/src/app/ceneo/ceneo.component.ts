@@ -70,11 +70,11 @@ export class CeneoComponent implements OnInit {
     this.product4.name = value4;
     this.product5.name = value5;
 
-    this.product1.number = no1;
-    this.product2.number = no2;
-    this.product3.number = no3;
-    this.product4.number = no4;
-    this.product5.number = no5;
+    this.product1.num = no1;
+    this.product2.num = no2;
+    this.product3.num = no3;
+    this.product4.num = no4;
+    this.product5.num = no5;
 
     this.product1.min_price = min1;
     this.product2.min_price = min2;
@@ -90,12 +90,12 @@ export class CeneoComponent implements OnInit {
 
     this.search1 = false;
     this.submit = true;
-    this.postOnCeneoApi
+    this.postOnCeneoApi();
   }
 }
 class Product{
   name: string;
-  number: number;
+  num: number;
   min_price: number;
   max_price: number;
   min_reputation: number;
