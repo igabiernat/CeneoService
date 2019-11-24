@@ -12,5 +12,6 @@ namespace CeneoRest.Models
         public decimal ShippingCost { get; set; }
         public string Link { get; set; }
         public string Info { get; set; }
+        public string SellersName { get; set; }
     }
 }

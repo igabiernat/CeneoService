@@ -13,6 +13,12 @@ namespace CeneoRest.Controllers
     [ApiController]
     public class CeneoController : ControllerBase
     {
+        private CeneoHandler _ceneoHandler = new CeneoHandler();
+
+        public CeneoController()
+        { 
+        }
+
         // GET: api/Ceneo
         [HttpGet]
         public IEnumerable<string> Get()
@@ -21,21 +27,21 @@ namespace CeneoRest.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Search([FromBody] List<Product> products)
+        public IActionResult Search([FromBody] List<Product> products)
         {
-            var result = await CeneoHandler.HandleSearchRequest(products);
-            return StatusCode( 200,result);
+            var result = _ceneoHandler.HandleSearchRequest(products);
+            return result;
         }
         [HttpGet("test")]
-        public async Task<IActionResult> Test()
+        public IActionResult Test()
         {
             var products = new List<Product>
             {
                 new Product {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
                 new Product {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui na telefon"}
             };
-            var result = await CeneoHandler.HandleSearchRequest(products);
-            return StatusCode(200, result);
+            var result = _ceneoHandler.HandleSearchRequest(products);
+            return result;
         }
     }
 }
