@@ -15,7 +15,6 @@ namespace CeneoRest.Ceneo
     {
         public static async Task<IActionResult> HandleSearchRequest(List<Product> products)
         {
-            var 
             Parallel.ForEach(products, async product =>
             {
                 var uri = $"https://www.ceneo.pl/szukaj-{product.name.Trim()}/";
