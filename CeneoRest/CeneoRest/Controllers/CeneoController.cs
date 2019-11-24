@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CeneoRest.Ceneo;
+using CeneoRest.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,11 +20,11 @@ namespace CeneoRest.Controllers
             return new string[] { "ceneo", "value" };
         }
 
-        [HttpPost("offer")]
-        public async Task<IActionResult> Offer()
+        [HttpPost("search")]
+        public async Task<IActionResult> Search([FromBody] List<Product> products)
         {
             var item = "telefon";
-            var result = await CeneoHandler.HandleOfferRequest($"https://www.ceneo.pl/szukaj-{item}/".ToLower());
+            var result = await CeneoHandler.HandleSearchRequest($"https://www.ceneo.pl/szukaj-{item}/".ToLower());
             return StatusCode( 200,result);
         }
     }
