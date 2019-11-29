@@ -27,7 +27,7 @@ namespace CeneoRest.Ceneo
             //PARALLEL CZYLI WIELOWĄTKOWO - "na raz wyślemy zapytania o wszystkie produkty, a nie będziemy czekać po kolei na każdy." Jak nie zadziala to zrobimy normalnie.
             Parallel.ForEach(products, async product =>
             {
-                var uri = $"http://www.ceneo.pl/szukaj-{product.name.Trim()}";
+                var uri = "https://www.ceneo.pl/;szukaj-{product.name.Trim()}";
                 //var uri = $"https://www.amazon.com/s?k=samsung+galaxy+s9&ref=nb_sb_noss_2/";
                 //var uri = $"http://www.ceneo.pl/Telefony_i_akcesoria;szukaj-samsung+galaxy+s9";
                 var pageContents = await ScrapPage(uri);
@@ -43,35 +43,7 @@ namespace CeneoRest.Ceneo
             //var page = await ScrapPage($"".ToLower());
             return new JsonResult(searchResults);
         }
-
-        public async Task<IActionResult> HandleSearchRequest(string uri)
-        {
-            //STARA WERSJA, DO USUNIECIA
-            try
-            {
-                Log.Information($"Request for uri {uri} started");
-                var startTime = DateTime.Now;
-                var page = await ScrapPage(uri);
-
-                var result = "RESULT";
-                var totalTime = DateTime.Now - startTime;
-                Log.Information($"Request handled in {totalTime.TotalSeconds} seconds");
-                return new JsonResult(result)
-                {
-                    StatusCode = StatusCodes.Status200OK
-                };
-            }
-            catch (Exception e)
-            {
-                Log.Fatal(e.Message);
-                return new JsonResult($"Fatal error: {e.Message}")
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError
-                };
-            }
-            
-            
-        }
+   
         private async Task<string> ScrapPage(string uri)
         {
             var httpClient = new HttpClient();
@@ -83,6 +55,16 @@ namespace CeneoRest.Ceneo
         {
             //throw new NotImplementedException();
             //TODO
+
+            var ProductList = pageDocument.DocumentNode.Descendants("div")
+               .Where(node => node.GetAttributeValue("class", "")
+               .Equals("category-list-body js_category-list-body js_search-results")).ToList();
+            //var pickedProduct = pageDocument.DocumentNode.SelectSingleNode("//div[@class = '\"category-list-body js_category-list-body js_search-results\"']");
+            //var pickedProduct = pageDocument.DocumentNode.SelectSingleNode("//div[@class = 'category-list-body js_category-list-body js_search-results']//strong[@class='cat-prod-row-name']/a");
+            //var productId = pickedProduct.Attributes["href"].Value;
+            //var picked = pageDocument.DocumentNode.Descendants("strong")
+            //    .Where(node => node.GetAttributeValue("class","")
+            //    .Equals("\"cat-prod-row-name\"")).ToList();
 
             var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
             usedSellers.Add(result.SellersName);
