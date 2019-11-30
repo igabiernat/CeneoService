@@ -9,11 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using CeneoRest.Models;
 using HtmlAgilityPack;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
+using System.Text;
 
 namespace CeneoRest.Ceneo
 {
@@ -27,9 +25,7 @@ namespace CeneoRest.Ceneo
             //PARALLEL CZYLI WIELOWĄTKOWO - "na raz wyślemy zapytania o wszystkie produkty, a nie będziemy czekać po kolei na każdy." Jak nie zadziala to zrobimy normalnie.
             Parallel.ForEach(products, async product =>
             {
-                var uri = "https://www.ceneo.pl/;szukaj-{product.name.Trim()}";
-                //var uri = $"https://www.amazon.com/s?k=samsung+galaxy+s9&ref=nb_sb_noss_2/";
-                //var uri = $"http://www.ceneo.pl/Telefony_i_akcesoria;szukaj-samsung+galaxy+s9";
+                var uri = $"https://www.ceneo.pl/;szukaj-{product.name.Trim()}";
                 var pageContents = await ScrapPage(uri);
                 HtmlDocument pageDocument = new HtmlDocument();
                 pageDocument.LoadHtml(pageContents);
@@ -47,8 +43,8 @@ namespace CeneoRest.Ceneo
         private async Task<string> ScrapPage(string uri)
         {
             var httpClient = new HttpClient();
-            var pageContents = httpClient.GetStringAsync(uri);
-            return await pageContents;
+            var pageContents = await httpClient.GetStringAsync(uri);
+            return pageContents;
         }
 
         private SearchResult CalculateBestSearchResult(HtmlDocument pageDocument)
