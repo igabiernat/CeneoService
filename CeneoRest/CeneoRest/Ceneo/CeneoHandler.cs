@@ -18,34 +18,36 @@ namespace CeneoRest.Ceneo
     public  class CeneoHandler
     {
         private List<string> usedSellers = new List<string>();
-        public IActionResult HandleSearchRequest(List<Product> products)
+        public async Task<IActionResult> HandleSearchRequest(List<Product> products)
         {
+
+
             var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
             var searchResults = new List<SearchResult>(); //Do tej listy zapiszemy wybrane przez nas produkty, który zwrócimy do klienta.
-            //PARALLEL CZYLI WIELOWĄTKOWO - "na raz wyślemy zapytania o wszystkie produkty, a nie będziemy czekać po kolei na każdy." Jak nie zadziala to zrobimy normalnie.
-            Parallel.ForEach(products, async product =>
+
+            foreach (var product in products)
             {
-                var uri = $"https://www.ceneo.pl/;szukaj-{product.name.Trim()}";
+                var uri = $"http://ceneo.pl/szukaj-{product.name.Replace(' ', '+')};0112-0.htm";
                 var pageContents = await ScrapPage(uri);
-                HtmlDocument pageDocument = new HtmlDocument();
+                WriteHtmlToFile(product, pageContents);
+                var pageDocument = new HtmlDocument();
                 //pageDocument.LoadHtml(pageContents);
                 pageDocument.Load("CeneoHTML.html");    //na razie z pliku
                 var result = CalculateBestSearchResult(pageDocument);
                 searchResults.Add(result);
                 Log.Information("FOREACH STOP");
-            });
-            //TODO REFACTOR SLEEP
-            Thread.Sleep(5000);
+            }
+
             Log.Information("STOP");
-            //var page = await ScrapPage($"".ToLower());
             return new JsonResult(searchResults);
         }
-   
+
         private async Task<string> ScrapPage(string uri)
         {
             var httpClient = new HttpClient();
-            var pageContents = await httpClient.GetStringAsync(uri);
-            return pageContents;
+            var response = await httpClient.GetAsync(uri);
+            var contents = await response.Content.ReadAsStringAsync();
+            return contents;
         }
 
         private SearchResult CalculateBestSearchResult(HtmlDocument pageDocument)
@@ -71,25 +73,32 @@ namespace CeneoRest.Ceneo
 
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", ""); //pobranie nazwy sprzedającego
 
-            var rating = shopChosen.Descendants("span") //pobranie ilości gwiazdek
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("screen-reader-text")).First().InnerText;
+            var rating = shopChosen //pobranie ilości gwiazdek
+                .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                .Equals("screen-reader-text")).InnerText;
 
-            var numberOfRatings = shopChosen.Descendants("span")    //pobranie ilości opinii
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("dotted-link js_mini-shop-info js_no-conv")).First().InnerText;
+            var numberOfRatings = shopChosen    //pobranie ilości opinii
+                .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
             
-            var ship = shopChosen.Descendants("div")    //pobranie informacji o wysyłce //TODO
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("product-delivery-info js_deliveryInfo")).First().InnerText;
+            var ship = shopChosen    //pobranie informacji o wysyłce //TODO
+                .Descendants("div").First(node => node.GetAttributeValue("class", "")
+                .Equals("product-delivery-info js_deliveryInfo")).InnerText;
 
-            var price = shopChosen.Descendants("span")  //pobranie ceny produktu
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("price-format nowrap")).First().FirstChild.InnerText;
+            var price = shopChosen  //pobranie ceny produktu
+                .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                .Equals("price-format nowrap")).FirstChild.InnerText;
           
             var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
             usedSellers.Add(result.SellersName);
             return result;
+        }
+        private void WriteHtmlToFile(Product product, string pageContents)
+        {
+            using (var writer = File.CreateText(product.name.Trim() + ".html"))
+            {
+                writer.Write(pageContents);
+            }
         }
     }
 }

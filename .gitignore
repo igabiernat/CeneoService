@@ -2,6 +2,7 @@ bin/
 obj/
 .vs/
 log*
+*.html
 
 node_modules/
 dist/
