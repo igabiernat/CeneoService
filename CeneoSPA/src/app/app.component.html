@@ -142,24 +142,16 @@
         <div *ngIf="submit">
             <div class="box">
                 <label class="label">Results</label>
-                <div class="box" *ngFor="let value of ceneoApiInfo">
-                  {{value}}
-                </div>
                 <div>
-                    <div class="box" *ngFor="let value of input">
-                        <p>Name: {{value.name}}</p>
-                        <a><p>{{value.num}}</p></a>
-                    </div>
 
-                      
-                        <div class="box" *ngFor="let result of arrayResults">
+                        <div class="box" *ngFor="let result of ceneoApiInfo">
                             
-                          <p>Name:  {{result.name}}</p>
-                          <p>Price: {{result.price}} zł</p> 
-                          <p>Shipping: {{result.shipping}} zł</p>
-                          <p>Link: <a href="{{result.link}}">{{result.link}}</a> </p>
-                          <p>Info: {{result.info}}</p>
-                          <p>Seller: {{result.sellersName}}</p>
+                          <p>Name:  {{result['name']}}</p>
+                          <p>Price: {{result['price']}} zł</p> 
+                          <p>Shipping: {{result['shippingCost']}} zł</p>
+                          <p>Link: <a href="{{result.link}}">{{result['link']}}</a> </p>
+                          <p>Info: {{result['info']}}</p>
+                          <p>Seller: {{result['sellersName']}}</p>
                           
                          
                         </div> 

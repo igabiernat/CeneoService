@@ -21,7 +21,7 @@ export class AppComponent implements OnInit{
   product4 =  new Product();
   product5 =  new Product();
   input = [this.product1, this.product2, this.product3, this.product4, this.product5];
-  arrayResults: SearchResult[];
+  //arrayResults: SearchResult[];
   //arrayResults = [new SearchResult, new SearchResult, new SearchResult, new SearchResult, new SearchResult]
   public totalPrice = 0;
 
@@ -54,9 +54,9 @@ export class AppComponent implements OnInit{
 
   //## get results ##
   getCeneoApiInfo(){
-    this.http.get('http://localhost:5000/api/ceneo').subscribe(response => {
+    this.http.get('http://localhost:5000/api/ceneo/test').subscribe(response => {
       this.ceneoApiInfo = response;
-      //this.arrayResults = response;
+      //this.arrayResults = JSON.parse(this.ceneoApiInfo);
     }, error => {
       console.log(error);
     });
@@ -65,8 +65,10 @@ export class AppComponent implements OnInit{
 
   //## beginning of summary ##
   summary(){
-      for(var i =0; i<=this.arrayResults.length; i++){
-        this.totalPrice = this.totalPrice + this.arrayResults[i].price + this.arrayResults[i].shipping;
+   
+    
+      for(var i in this.ceneoApiInfo){
+        this.totalPrice += Number(i['price']) + Number(i['shippingCost']);
     }
   }
 
@@ -131,16 +133,17 @@ class Product{
   }
 }
 
-//## class to form received data from rest ##
-class SearchResult{
-  name: string;
-  price: number;
-  shipping: number;
-  link: string;
-  info: string;
-  sellersName: string;
+//unuseful
+// //## class to form received data from rest ##
+// class SearchResult{
+//   name: string;
+//   price: number;
+//   shipping: number;
+//   link: string;
+//   info: string;
+//   sellersName: string;
 
-  constructor(){
+//   constructor(){
 
-  }
-}
+//   }
+// }
