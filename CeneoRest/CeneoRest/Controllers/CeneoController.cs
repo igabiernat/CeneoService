@@ -27,7 +27,7 @@ namespace CeneoRest.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Search([FromBody] List<Product> products)
+        public async Task<IActionResult> Search([FromBody] List<ProductDto> products)
         {
             var result = await _ceneoHandler.HandleSearchRequest(products);
             return result;
@@ -35,10 +35,10 @@ namespace CeneoRest.Controllers
         [HttpGet("test")]
         public async Task<IActionResult> Test()
         {
-            var products = new List<Product>
+            var products = new List<ProductDto>
             {
-                new Product {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
-                new Product {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
+                new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
+                new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
             };
             var result = await _ceneoHandler.HandleSearchRequest(products);
             return result;

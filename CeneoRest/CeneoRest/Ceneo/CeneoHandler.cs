@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using CeneoRest.Models;
@@ -20,6 +21,8 @@ namespace CeneoRest.Ceneo
         private readonly List<string> _usedSellers = new List<string>();
         private readonly List<SearchResult> _searchResults = new List<SearchResult>();
         private int _errorCounter = 0;
+        private int _errorProductCounter = 0;
+        private int _errorLimit = 20;
 
         public async Task<IActionResult> HandleSearchRequest(List<ProductDto> products)
         {
@@ -55,25 +58,18 @@ namespace CeneoRest.Ceneo
             {
                 _errorCounter++;
                 Log.Error($"Error {_errorCounter} for {productDto.name} occured: {e.Message}");
-                if (_errorCounter < 10)
+                if (_errorCounter < _errorLimit)
                 {
                     await GetSearchResult(productDto);
                 }
                 else
                 {
-                    Log.Fatal($"Maximum 10 tries exceeded. Exception: {e.Message}");
-                    throw new Exception($"Maximum 10 tries exceeded. Exception: {e.Message}");
+                    Log.Fatal($"Maximum {_errorLimit} tries exceeded. Exception: {e.Message}");
                 }
             }
         }
 
-        private async Task<string> ScrapPage(string uri)
-        {
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(uri);
-            var contents = await response.Content.ReadAsStringAsync();
-            return contents;
-        }
+
 
         private async Task<SearchResult> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
         {
@@ -84,45 +80,8 @@ namespace CeneoRest.Ceneo
             }
 
             var offersCountedIntoAlgorithm = 5;
+
             await GetSearchResultsForId(productId, productDto, offersCountedIntoAlgorithm);
-
-
-            //var productsList = pageDocument.DocumentNode.Descendants("strong") //wczytywanie listy produktów    
-            //    .Where(node => node.GetAttributeValue("class","")
-            //    .Equals("cat-prod-row-name")).ToList();
-
-            //var productInfo = productsList[1].SelectSingleNode("a");   //wybranie pierwszego produktu (który nie jest sponsorowany) //TODO - wybieranie produktu który ma powyżej 5 sklepów
-            
-            //var id = productInfo.GetAttributeValue("href", ""); //pobieranie id produktu //TODO - generowanie url, który przeniesie do wybranego produktu
-
-            //HtmlDocument chosenProduct = new HtmlDocument();
-            //chosenProduct.Load("productHTML.html"); //na razie z pliku bo inaczej nie działa :)
-
-            //var shopsList = chosenProduct.DocumentNode.Descendants("tr")    //wczytywanie listy sklepów oferujących sprzedaż wybranego produktu
-            //    .Where(node => node.GetAttributeValue("class", "")
-            //    .Equals("fileName-offer clickable-offer js_offer-container-click  js_product-offer")).ToList();
-            //var shopChosen = shopsList[1];  //wybór sklepu //TODO - wybór najlepszego sklepu
-
-            //var sellersName = shopChosen.GetAttributeValue("data-shopurl", ""); //pobranie nazwy sprzedającego
-
-            //var rating = shopChosen //pobranie ilości gwiazdek
-            //    .Descendants("span").First(node => node.GetAttributeValue("class", "")
-            //    .Equals("screen-reader-text")).InnerText;
-
-            //var numberOfRatings = shopChosen    //pobranie ilości opinii
-            //    .Descendants("span").First(node => node.GetAttributeValue("class", "")
-            //    .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
-            
-            //var ship = shopChosen    //pobranie informacji o wysyłce //TODO
-            //    .Descendants("div").First(node => node.GetAttributeValue("class", "")
-            //    .Equals("fileName-delivery-info js_deliveryInfo")).InnerText;
-
-            //var price = shopChosen  //pobranie ceny produktu
-            //    .Descendants("span").First(node => node.GetAttributeValue("class", "")
-            //    .Equals("price-format nowrap")).FirstChild.InnerText;
-          
-
-
 
             var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
             _usedSellers.Add(result.SellersName);
@@ -132,20 +91,76 @@ namespace CeneoRest.Ceneo
         private async Task<List<SearchResult>> GetSearchResultsForId(string productId, ProductDto productDto, int offerscounted = 5)
         {
             var uri = $"https://www.ceneo.pl/{productId.Trim()}";
-            var pageContents = await ScrapPage(uri);
-            WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
             var pageDocument = new HtmlDocument();
-            pageDocument.LoadHtml(pageContents);
+            try
+            {
+                var pageContents = await ScrapPage(uri);
+                WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
+                pageDocument.LoadHtml(pageContents);
+            }
+            catch (Exception e)
+            {
+                _errorProductCounter++;
+                Log.Error($"Error {_errorProductCounter} for productId {productId} occured: {e.Message}");
+                if (_errorProductCounter < _errorLimit)
+                {
+                    await GetSearchResultsForId(productId, productDto, offerscounted);
+                }
+                else
+                {
+                    Log.Fatal($"Maximum {_errorLimit} tries exceeded for productId {productId}. Exception: {e.Message}");
+                }
+            }
+
+            var shopsList = pageDocument.DocumentNode.Descendants("tr")    //wczytywanie listy sklepów oferujących sprzedaż wybranego produktu
+                .Where(node => node.GetAttributeValue("class", "")
+                    .Contains("product-offer clickable-offer js_offer-container-click")).ToList();
 
             var searchResults = new List<SearchResult>();
-            for (int i = 0; i < offerscounted; i++)
+            for (int i = 0; i < shopsList.Count; i++)
             {
-                //TODO ASSIGN OFFERS TO
+                if (i >= offerscounted)
+                    break;
+    
+                var shopChosen = shopsList[i];
+                var sellersName = shopChosen.GetAttributeValue("data-shopurl", ""); //pobranie nazwy sprzedającego
+
+                var rating = shopChosen //pobranie ilości gwiazdek
+                    .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                    .Equals("screen-reader-text")).InnerText;
+
+                var numberOfRatings = shopChosen    //pobranie ilości opinii
+                    .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                    .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
+
+                var ship = shopChosen    //pobranie informacji o wysyłce //TODO
+                    .Descendants("div").First(node => node.GetAttributeValue("class", "")
+                    .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+
+                var price = shopChosen  //pobranie ceny produktu
+                    .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                    .Equals("price-format nowrap")).FirstChild.InnerText;
+
+
+                var searchResult = new SearchResult
+                {
+                };
             }
 
             return searchResults;
         }
-
+        private async Task<string> ScrapPage(string uri)
+        {
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(uri);
+            var contents = await response.Content.ReadAsStringAsync();
+            if (contents.Contains("nieprawidłowa domena dla klucza witryny"))
+            {
+                Log.Error("CAPTCHA SHOWED - nothing to do here");
+                throw new Exception("CAPTCHA SHOWED - nothing to do here");
+            }
+            return contents;
+        }
         private void WriteHtmlToFile(string fileName, string pageContents)
         {
             using (var writer = File.CreateText(fileName + ".html"))
