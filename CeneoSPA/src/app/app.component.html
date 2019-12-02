@@ -2,18 +2,12 @@
   <div>
       <div class="tabs is-centered is-boxed is-medium">
           <ul>
-            <li [class.is-active] = "search1" (click)="onClickMe1()">
+            <li [class.is-active] = "search1">
               <a>
                 <span><i class="fas fa-image" aria-hidden="true"></i></span>
                 <span>Step 1: Searching</span>
               </a>
             </li>
-            <!-- <li [class.is-active] = "search2" (click)="onClickMe2()">
-              <a>
-                <span><i class="fas fa-music" aria-hidden="true"></i></span>
-                <span>Search2</span>
-              </a>
-            </li> -->
             <li [class.is-active] = "submit" >
                 <a>
                   <span><i class="fas fa-music" aria-hidden="true"></i></span>
@@ -23,16 +17,141 @@
           </ul>
         </div>
         <div *ngIf="search1">
-            <app-ceneo ></app-ceneo>
+            <div>
+                <div class="box">
+                    <label class="label">Search</label>
+                    
+                      
+                      <div class="box">
+                          <p class="note">First product</p>
+                        <div class="field has-addons">
+                          <input #box1 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box1.value)">
+                          <p class="control">
+                              <input #box1no class="input" type="number" min="0" placeholder="no. of products">
+                          </p>
+                        </div>
+                        <div class="field has-addons">
+                            <p class="control">
+                                <input #box1min class="input" type="number" min="0" placeholder="min. price [zł]">
+                            </p>
+                            <p class="control">
+                                <input #box1max class="input" type="number" min="0" placeholder="max. price [zł]">
+                             </p>
+                        </div>
+                        
+                      </div>
+                    
+                      
+                      <div class="box">
+                          <p class="note">Second product</p>
+                          <div class="field has-addons">
+                              <input #box2 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box2.value)">
+                              <p class="control">
+                                  <input #box2no class="input" type="number" min="0" placeholder="no. of products">
+                              </p>
+                          </div>
+                        <div class="field has-addons">
+                            <p class="control">
+                                <input #box2min class="input" type="number" min="0" placeholder="min. price [zł]">
+                            </p>
+                            <p class="control">
+                                <input #box2max class="input" type="number" min="0" placeholder="max. price [zł]">
+                             </p>
+                        </div>
+                        
+                      </div>
+                      
+                      
+                      <div class="box">
+                          <p class="note">Third product</p>
+                          <div class="field has-addons">
+                              <input #box3 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box3.value)">
+                              <p class="control">
+                                  <input #box3no class="input" type="number" min="0" placeholder="no. of products">
+                              </p>
+                          </div>
+                        <div class="field has-addons">
+                            <p class="control">
+                                <input #box3min class="input" type="number" min="0" placeholder="min. price [zł]">
+                            </p>
+                            <p class="control">
+                                <input #box3max class="input" type="number" min="0" placeholder="max. price [zł]">
+                             </p>
+                        </div>
+                          
+                      </div>
+                      
+                      <div class="box">
+                          <p class="note">Fourth product</p>
+                          <div class="field has-addons">
+                              <input #box4 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box4.value)">
+                              <p class="control">
+                                  <input #box4no class="input" type="number" min="0" placeholder="no. of products">
+                              </p>
+                          </div>
+                        <div class="field has-addons">
+                            <p class="control">
+                                <input #box4min class="input" type="number" min="0" placeholder="min. price [zł]">
+                            </p>
+                            <p class="control">
+                                <input #box4max class="input" type="number" min="0" placeholder="max. price [zł]">
+                             </p>
+                        </div>
+                          
+                      </div>
+                      
+                      <div class="box">
+                          <p class="note">Fifth product</p>
+                          <div class="field has-addons">
+                              <input #box5 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box5.value)">
+                              <p class="control">
+                                  <input #box5no class="input" type="number" min="0" placeholder="no. of products">
+                              </p>
+                          </div>
+                        <div class="field has-addons">
+                            <p class="control">
+                                <input #box5min class="input" type="number" min="0" placeholder="min. price [zł]">
+                            </p>
+                            <p class="control">
+                                <input #box5max class="input" type="number" min ="0" placeholder="max. price [zł]">
+                             </p>
+                        </div>
+                          
+                      </div>
+                      <div class ="box">
+                        <p class="label">About whole search:</p>
+                        <div class="field">
+                            <div class="control">
+                              <label class="checkbox">
+                                <input type="checkbox">
+                                The best saller rating
+                              </label>
+                            </div>
+                        </div>  
 
+                          <a class="button is-focused" (click) = "onClickMe(box1.value, box2.value, box3.value, box4.value, box5.value,
+                           box1no.value, box2no.value, box3no.value, box4no.value, box5no.value,
+                            box1min.value, box2min.value, box3min.value, box4min.value, box5min.value,
+                             box1max.value, box2max.value, box3max.value, box4max.value, box5max.value)">Submit</a>
+                            
+                        
+                      </div> 
+                </div>    
+            </div>
         </div>
         <div *ngIf="submit">
-            <div class="field">
-                <label class="label">Results</label>
-            </div>
             <div class="box">
-                <a class="button is-focused" (click)="onClickMeBack()">Back</a>
-                
+                <label class="label">Results</label>
+                <div>
+                    <p *ngFor="let value of ceneoApiInfo">
+                        {{value}}
+                      </p>
+                      <p *ngFor="let v of input">
+                        {{v}}
+       
+                      </p>
+                      <a class="button is-focused" (click)="onClickMeBack()">Back</a>
+                </div>
             </div>
         </div>
   </div>
