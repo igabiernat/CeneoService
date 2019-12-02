@@ -27,15 +27,16 @@ namespace CeneoRest.Ceneo
 
             foreach (var product in products)
             {
+                Log.Information($"{product.name} foreach start");
                 var uri = $"http://ceneo.pl/szukaj-{product.name.Replace(' ', '+')};0112-0.htm";
                 var pageContents = await ScrapPage(uri);
                 WriteHtmlToFile(product, pageContents);
                 var pageDocument = new HtmlDocument();
-                //pageDocument.LoadHtml(pageContents);
-                pageDocument.Load("CeneoHTML.html");    //na razie z pliku
+                pageDocument.LoadHtml(pageContents);
+                //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
                 var result = CalculateBestSearchResult(pageDocument);
                 searchResults.Add(result);
-                Log.Information("FOREACH STOP");
+                Log.Information($"{product.name} foreach stop ");
             }
 
             Log.Information("STOP");
@@ -52,9 +53,6 @@ namespace CeneoRest.Ceneo
 
         private SearchResult CalculateBestSearchResult(HtmlDocument pageDocument)
         {
-            //throw new NotImplementedException();
-            //TODO
-
             var productsList = pageDocument.DocumentNode.Descendants("strong") //wczytywanie listy produktów    
                 .Where(node => node.GetAttributeValue("class","")
                 .Equals("cat-prod-row-name")).ToList();
