@@ -17,30 +17,50 @@ namespace CeneoRest.Ceneo
 {
     public  class CeneoHandler
     {
-        private List<string> usedSellers = new List<string>();
+        private readonly List<string> _usedSellers = new List<string>();
+        private readonly List<SearchResult> _searchResults = new List<SearchResult>();
+        private int _errorCounter = 0;
+
         public async Task<IActionResult> HandleSearchRequest(List<Product> products)
         {
 
 
             var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
-            var searchResults = new List<SearchResult>(); //Do tej listy zapiszemy wybrane przez nas produkty, który zwrócimy do klienta.
-
             foreach (var product in products)
             {
+                
                 Log.Information($"{product.name} foreach start");
-                var uri = $"http://ceneo.pl/szukaj-{product.name.Replace(' ', '+')};0112-0.htm";
-                var pageContents = await ScrapPage(uri);
-                WriteHtmlToFile(product, pageContents);
-                var pageDocument = new HtmlDocument();
-                pageDocument.LoadHtml(pageContents);
-                //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
-                var result = CalculateBestSearchResult(pageDocument);
-                searchResults.Add(result);
+                try
+                {
+                    var uri = $"http://ceneo.pl/szukaj-{product.name.Replace(' ', '+')};0112-0.htm";
+                    var pageContents = await ScrapPage(uri);
+                    WriteHtmlToFile(product, pageContents); //TODO DELETE BEFORE RELEASE
+                    var pageDocument = new HtmlDocument();
+                    pageDocument.LoadHtml(pageContents);
+                    //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
+                    var result = CalculateBestSearchResult(pageDocument);
+                    _searchResults.Add(result);
+
+                }
+                catch (Exception e)
+                {
+                    _errorCounter++;
+                    Log.Error($"Error {_errorCounter} for {product.name} occured: {e.Message}");
+                    if (_errorCounter < 10)
+                    {
+
+                    }
+                    else
+                    {
+                        Log.Fatal($"Maximum 10 tries exceeded. Exception: {e.Message}");
+                        throw new Exception($"Maximum 10 tries exceeded. Exception: {e.Message}");
+                    }
+                }
                 Log.Information($"{product.name} foreach stop ");
             }
 
             Log.Information("STOP");
-            return new JsonResult(searchResults);
+            return new JsonResult(_searchResults);
         }
 
         private async Task<string> ScrapPage(string uri)
@@ -88,7 +108,7 @@ namespace CeneoRest.Ceneo
                 .Equals("price-format nowrap")).FirstChild.InnerText;
           
             var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
-            usedSellers.Add(result.SellersName);
+            _usedSellers.Add(result.SellersName);
             return result;
         }
         private void WriteHtmlToFile(Product product, string pageContents)
