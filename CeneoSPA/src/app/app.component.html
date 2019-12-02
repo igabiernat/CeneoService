@@ -142,6 +142,9 @@
         <div *ngIf="submit">
             <div class="box">
                 <label class="label">Results</label>
+                <div class="box" *ngFor="let value of ceneoApiInfo">
+                  {{value}}
+                </div>
                 <div>
                     <div class="box" *ngFor="let value of input">
                         <p>Name: {{value.name}}</p>

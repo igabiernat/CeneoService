@@ -33,7 +33,7 @@ namespace CeneoRest.Ceneo
                 WriteHtmlToFile(product, pageContents);
                 var pageDocument = new HtmlDocument();
                 pageDocument.LoadHtml(pageContents);
-                //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
+                pageDocument.Load("CeneoHTML.html");    //na razie z pliku
                 var result = CalculateBestSearchResult(pageDocument);
                 searchResults.Add(result);
                 Log.Information($"{product.name} foreach stop ");
