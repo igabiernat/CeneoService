@@ -25,9 +25,9 @@
                       <div class="box">
                           <p class="note">First product</p>
                         <div class="field has-addons">
-                          <input #box1 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box1.value)">
+                          <input #box1 class="input" type="text" placeholder="e.g. Laptop">
                           <p class="control">
-                              <input #box1no class="input" type="number" min="0" placeholder="no. of products">
+                              <input #box1no class="input" type="number" min="0" placeholder="number">
                           </p>
                         </div>
                         <div class="field has-addons">
@@ -45,9 +45,9 @@
                       <div class="box">
                           <p class="note">Second product</p>
                           <div class="field has-addons">
-                              <input #box2 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box2.value)">
+                              <input #box2 class="input" type="text" placeholder="e.g. Laptop">
                               <p class="control">
-                                  <input #box2no class="input" type="number" min="0" placeholder="no. of products">
+                                  <input #box2no class="input" type="number" min="0" placeholder="number">
                               </p>
                           </div>
                         <div class="field has-addons">
@@ -65,9 +65,9 @@
                       <div class="box">
                           <p class="note">Third product</p>
                           <div class="field has-addons">
-                              <input #box3 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box3.value)">
+                              <input #box3 class="input" type="text" placeholder="e.g. Laptop">
                               <p class="control">
-                                  <input #box3no class="input" type="number" min="0" placeholder="no. of products">
+                                  <input #box3no class="input" type="number" min="0" placeholder="number">
                               </p>
                           </div>
                         <div class="field has-addons">
@@ -84,9 +84,9 @@
                       <div class="box">
                           <p class="note">Fourth product</p>
                           <div class="field has-addons">
-                              <input #box4 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box4.value)">
+                              <input #box4 class="input" type="text" placeholder="e.g. Laptop">
                               <p class="control">
-                                  <input #box4no class="input" type="number" min="0" placeholder="no. of products">
+                                  <input #box4no class="input" type="number" min="0" placeholder="number">
                               </p>
                           </div>
                         <div class="field has-addons">
@@ -103,9 +103,9 @@
                       <div class="box">
                           <p class="note">Fifth product</p>
                           <div class="field has-addons">
-                              <input #box5 class="input" type="text" placeholder="e.g. Laptop" (keyup.enter)="onEnter(box5.value)">
+                              <input #box5 class="input" type="text" placeholder="e.g. Laptop">
                               <p class="control">
-                                  <input #box5no class="input" type="number" min="0" placeholder="no. of products">
+                                  <input #box5no class="input" type="number" min="0" placeholder="number">
                               </p>
                           </div>
                         <div class="field has-addons">
@@ -143,13 +143,29 @@
             <div class="box">
                 <label class="label">Results</label>
                 <div>
-                    <p *ngFor="let value of ceneoApiInfo">
-                        {{value}}
-                      </p>
-                      <p *ngFor="let v of input">
-                        {{v}}
-       
-                      </p>
+                    <div class="box" *ngFor="let value of input">
+                        <p>Name: {{value.name}}</p>
+                        <a><p>{{value.num}}</p></a>
+                    </div>
+
+                      
+                        <div class="box" *ngFor="let result of arrayResults">
+                            
+                          <p>Name:  {{result.name}}</p>
+                          <p>Price: {{result.price}} zł</p> 
+                          <p>Shipping: {{result.shipping}} zł</p>
+                          <p>Link: <a href="{{result.link}}">{{result.link}}</a> </p>
+                          <p>Info: {{result.info}}</p>
+                          <p>Seller: {{result.sellersName}}</p>
+                          
+                         
+                        </div> 
+                        <div class="box">
+                            <label class="label">Summary</label>
+                            <p>Total price:  {{totalPrice}}</p>
+
+                        </div>
+                      
                       <a class="button is-focused" (click)="onClickMeBack()">Back</a>
                 </div>
             </div>

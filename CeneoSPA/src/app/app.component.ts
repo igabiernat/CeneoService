@@ -1,6 +1,7 @@
 import { Component,Input,OnInit, ViewChild, AfterViewInit, Directive } from '@angular/core';
 import { CeneoComponent } from "src/app/ceneo/ceneo.component";
 import { HttpClient } from '@angular/common/http';
+import { analyzeAndValidateNgModules } from '@angular/compiler';
 
 @Component({
   selector: 'app-root',
@@ -13,32 +14,30 @@ export class AppComponent implements OnInit{
   public search1 = true;
   public submit = false;
   ceneoApiInfo: any;
+  
   product1 =  new Product();
   product2 =  new Product();
   product3 =  new Product();
   product4 =  new Product();
   product5 =  new Product();
   input = [this.product1, this.product2, this.product3, this.product4, this.product5];
-  
-
-
+  arrayResults: SearchResult[];
+  //arrayResults = [new SearchResult, new SearchResult, new SearchResult, new SearchResult, new SearchResult]
+  public totalPrice = 0;
 
 
   constructor(private http: HttpClient) { 
     
   }
-  //TODO: jeden produkt do jednej zmiennej
-  //czy nazwy produktow do zmiennej itd.
-  //TODO: wartość submit to componentu app zaby
-  //zmienic karte
-  //TODO: obsługa odpowiedzi
-  
-  
-  
-  
+
+
+
   ngOnInit() {
     this.getCeneoApiInfo();
   }
+
+
+  //## send data ##
   postOnCeneoApi(){
     this.http.post('http://localhost:5000/api/ceneo', this.input).subscribe(
       (val) => {
@@ -52,22 +51,33 @@ export class AppComponent implements OnInit{
           console.log("The POST observable is now completed.");
       });
   }
+
+  //## get results ##
   getCeneoApiInfo(){
     this.http.get('http://localhost:5000/api/ceneo').subscribe(response => {
       this.ceneoApiInfo = response;
+      //this.arrayResults = response;
     }, error => {
       console.log(error);
     });
   }
 
 
-  //onEnter (value: string) {this.input.push(value);}
+  //## beginning of summary ##
+  summary(){
+      for(var i =0; i<=this.arrayResults.length; i++){
+        this.totalPrice = this.totalPrice + this.arrayResults[i].price + this.arrayResults[i].shipping;
+    }
+  }
+
+
+  //## on tab results, come back to searching ##
   onClickMeBack(){
     this.search1 = true;
     this.submit = false;
   }
 
-  
+  //## button submit, send data, change tab, receive results, summary-total price ##
   onClickMe(value1: string, value2: string, value3: string, value4: string, value5: string,
      no1: number, no2: number, no3: number, no4: number, no5: number, 
      min1: number, min2: number, min3: number, min4: number, min5: number,
@@ -100,9 +110,13 @@ export class AppComponent implements OnInit{
     this.search1 = false;
     this.submit = true;
     this.postOnCeneoApi();
+    this.getCeneoApiInfo();
+    this.summary();
   }
 
 }
+
+//## class created to easily send data from form ##
 class Product{
   name: string;
   num: number;
@@ -110,8 +124,23 @@ class Product{
   max_price: number;
   min_reputation: number;
   min_rating_no: number;
+
   constructor(){
     this.min_reputation = 4;
     this.min_rating_no = 20;
+  }
+}
+
+//## class to form received data from rest ##
+class SearchResult{
+  name: string;
+  price: number;
+  shipping: number;
+  link: string;
+  info: string;
+  sellersName: string;
+
+  constructor(){
+
   }
 }
