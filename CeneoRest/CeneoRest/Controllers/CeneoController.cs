@@ -13,7 +13,7 @@ namespace CeneoRest.Controllers
     [ApiController]
     public class CeneoController : ControllerBase
     {
-        private CeneoHandler _ceneoHandler = new CeneoHandler();
+        private readonly CeneoHandler _ceneoHandler = new CeneoHandler();
 
         public CeneoController()
         { 

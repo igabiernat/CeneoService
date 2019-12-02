@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CeneoRest.Models
 {
-    public class Product
+    public class ProductDto
     {
         public string name { get; set; }
         public int num { get; set; }
