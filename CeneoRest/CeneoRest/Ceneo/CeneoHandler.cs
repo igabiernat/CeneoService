@@ -29,10 +29,10 @@ namespace CeneoRest.Ceneo
             {
                 Log.Information($"{product.name} foreach start");
                 var uri = $"http://ceneo.pl/szukaj-{product.name.Replace(' ', '+')};0112-0.htm";
-                var pageContents = await ScrapPage(uri);
-                WriteHtmlToFile(product, pageContents);
+               // var pageContents = await ScrapPage(uri);
+             //   WriteHtmlToFile(product, pageContents);
                 var pageDocument = new HtmlDocument();
-                pageDocument.LoadHtml(pageContents);
+             //   pageDocument.LoadHtml(pageContents);
                 pageDocument.Load("CeneoHTML.html");    //na razie z pliku
                 var result = CalculateBestSearchResult(pageDocument);
                 searchResults.Add(result);
