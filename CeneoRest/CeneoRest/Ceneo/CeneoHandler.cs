@@ -31,12 +31,15 @@ namespace CeneoRest.Ceneo
             var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
             foreach (var product in products)
             {
+                _errorCounter = 0;
+                _errorProductCounter = 0;
                 Log.Information($"{product.name} foreach start");
                 await GetSearchResult(product);
                 Log.Information($"{product.name} foreach stop ");
             }
 
             Log.Information("STOP");
+            _searchResults.Add(new SearchResult { Name = "testowy", Price = 9.5M });
             return new JsonResult(_searchResults);
         }
 
@@ -116,39 +119,86 @@ namespace CeneoRest.Ceneo
                 .Where(node => node.GetAttributeValue("class", "")
                     .Contains("product-offer clickable-offer js_offer-container-click")).ToList();
 
-            var searchResults = new List<SearchResult>();
+            var productSearchResults = new List<SearchResult>();
             for (int i = 0; i < shopsList.Count; i++)
             {
                 if (i >= offerscounted)
                     break;
     
                 var shopChosen = shopsList[i];
-                var sellersName = shopChosen.GetAttributeValue("data-shopurl", ""); //pobranie nazwy sprzedającego
-
                 var rating = shopChosen //pobranie ilości gwiazdek
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
-                    .Equals("screen-reader-text")).InnerText;
+                        .Equals("screen-reader-text")).InnerText;
 
                 var numberOfRatings = shopChosen    //pobranie ilości opinii
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
-                    .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
+                        .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
 
-                var ship = shopChosen    //pobranie informacji o wysyłce //TODO
-                    .Descendants("div").First(node => node.GetAttributeValue("class", "")
-                    .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+                //"Ocena 5 / 5"
+                //if (rating.Trim()[0] < 4)
+                //{
+                //    continue;
+                //}
+                //else if (Int32.Parse(numberOfRatings.Replace(" opinii", "")) < 20)
+                //{
+                //    continue;
+                //}
 
-                var price = shopChosen  //pobranie ceny produktu
-                    .Descendants("span").First(node => node.GetAttributeValue("class", "")
-                    .Equals("price-format nowrap")).FirstChild.InnerText;
+                var name = pageDocument.DocumentNode
+                    .Descendants("h1").First(node => node.GetAttributeValue("class", "")
+                        .Contains("product-name js_product-h1-link")).InnerText;
 
-
-                var searchResult = new SearchResult
-                {
-                };
+                var searchResult = CreateSearchResult(shopChosen, name);
+                productSearchResults.Add(searchResult);
             }
 
-            return searchResults;
+            if (productSearchResults.Count == 0)
+            {
+                var searchResult = CreateSearchResult(shopsList[0], productDto.name);
+                productSearchResults.Add(searchResult);
+            }
+
+            _searchResults.Add(productSearchResults[0]);
+
+
+            return productSearchResults;
         }
+
+        private SearchResult CreateSearchResult(HtmlNode shopChosen, string name)
+        {
+            var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
+
+            var price = shopChosen
+                .Descendants("span").First(node => node.GetAttributeValue("class", "")
+                    .Equals("price-format nowrap")).FirstChild.InnerText;
+
+            var ship = shopChosen
+                .Descendants("div").First(node => node.GetAttributeValue("class", "")
+                    .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+
+            if (ship.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
+            {
+                ship = "0";
+            }
+            else if (ship.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
+            {
+                ship = "15";
+            }
+            else
+            {
+                ship = (Decimal.Parse(ship.Replace("z wysyłką od ","").Replace(" zł","").Trim()) - Decimal.Parse(price.Trim())).ToString();
+            }
+
+
+            return new SearchResult
+            {
+                Name = name,
+                Price = Decimal.Parse(price.Trim()),
+                SellersName = sellersName,
+                ShippingCost = Decimal.Parse(ship.Trim()),
+            };
+        }
+
         private async Task<string> ScrapPage(string uri)
         {
             var httpClient = new HttpClient();
