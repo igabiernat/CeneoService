@@ -13,6 +13,7 @@ using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CeneoRest.Ceneo
 {
@@ -126,13 +127,20 @@ namespace CeneoRest.Ceneo
                     break;
     
                 var shopChosen = shopsList[i];
-                var rating = shopChosen //pobranie ilości gwiazdek
+                var ratingString = shopChosen //pobranie ilości gwiazdek
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
                         .Equals("screen-reader-text")).InnerText;
 
-                var numberOfRatings = shopChosen    //pobranie ilości opinii
+                ratingString = ratingString.Substring(0, ratingString.IndexOf("/"));
+                ratingString = Regex.Replace(ratingString, "[A-Za-z]", "");
+                decimal rating = decimal.Parse(ratingString);
+
+                var numberOfRatingsString = shopChosen    //pobranie ilości opinii
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
                         .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
+
+                numberOfRatingsString = Regex.Replace(numberOfRatingsString, "[A-Za-z]", "");
+                decimal numberOfRatings = decimal.Parse(numberOfRatingsString);
 
                 //"Ocena 5 / 5"
                 //if (rating.Trim()[0] < 4)
@@ -168,34 +176,40 @@ namespace CeneoRest.Ceneo
         {
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
 
-            var price = shopChosen
+            var priceString = shopChosen
                 .Descendants("span").First(node => node.GetAttributeValue("class", "")
                     .Equals("price-format nowrap")).FirstChild.InnerText;
 
-            var ship = shopChosen
+            decimal price = decimal.Parse(priceString);
+
+            var shipInfoString = shopChosen
                 .Descendants("div").First(node => node.GetAttributeValue("class", "")
                     .Equals("product-delivery-info js_deliveryInfo")).InnerText;
 
-            if (ship.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
+            decimal ship = 0;
+
+            if (shipInfoString.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
             {
-                ship = "0";
+                ship = 0;
             }
-            else if (ship.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
+            else if (shipInfoString.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
             {
-                ship = "15";
+                ship = 15;
             }
             else
             {
-                ship = (Decimal.Parse(ship.Replace("z wysyłką od ","").Replace(" zł","").Trim()) - Decimal.Parse(price.Trim())).ToString();
+                String withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
+                decimal withShipping = decimal.Parse(withShippingString);
+                ship = withShipping - price;
             }
 
 
             return new SearchResult
             {
                 Name = name,
-                Price = Decimal.Parse(price.Trim()),
+                Price = price,
                 SellersName = sellersName,
-                ShippingCost = Decimal.Parse(ship.Trim()),
+                ShippingCost = ship,
             };
         }
 
