@@ -35,27 +35,14 @@ namespace CeneoRest.Controllers
         [HttpGet("test")]
         public async Task<IActionResult> Test()
         {
-            //var products = new List<ProductDto>
-            //{
-            //    new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
-            //    new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
-            //};
-            //var result = await _ceneoHandler.HandleSearchRequest(products);
-            var names = new List<string>
+            var products = new List<ProductDto>
             {
-                "samsung s10",
-                "samsung s10 biały",
-                "klucz",
-                "gra",
-                "red dead redemption 2 pc",
-                "termos",
-                "kubek",
-                "kosiarka",
-                "kompter"
+                new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
+                new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
             };
 
-            _ceneoHandler.ScrapingTest(names);
-            return new JsonResult("result");
+            var result = await _ceneoHandler.HandleSearchRequest(products);
+            return new JsonResult(result);
         }
     }
 }
