@@ -29,19 +29,8 @@ namespace CeneoRest.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] List<ProductDto> products)
         {
-            //var result = await _ceneoHandler.HandleSearchRequest(products);
-            var results = new List<SearchResult>();
-            foreach (var product in products)
-            {
-                results.Add(new SearchResult
-                {
-                    Name = product.name,
-                    Info = "info",
-                    Price = product.max_price ?? 0,
-                });
-            }
-
-            return new JsonResult(results);
+            var result = await _ceneoHandler.HandleSearchRequest(products);
+            return new JsonResult(result);
         }
         [HttpGet("test")]
         public async Task<IActionResult> Test()
@@ -52,26 +41,21 @@ namespace CeneoRest.Controllers
             //    new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
             //};
             //var result = await _ceneoHandler.HandleSearchRequest(products);
-            var results = new List<SearchResult>
+            var names = new List<string>
             {
-                new SearchResult
-                {
-                    Name = "nazwa", Info = "info", Link = "https://ceneo.pl", Price = 10, SellersName = "auchan",
-                    ShippingCost = 2.5M
-                },
-                new SearchResult
-                {
-                    Name = "nazwa2", Info = "info2", Link = "https://ceneo.pl", Price = 15, SellersName = "auchan",
-                    ShippingCost = 0
-                },
-                new SearchResult
-                {
-                    Name = "nazwa3", Info = "info3", Link = "https://ceneo.pl", Price = 215.42M, SellersName = "tesco",
-                    ShippingCost = 10
-                },
+                "samsung s10",
+                "samsung s10 biały",
+                "klucz",
+                "gra",
+                "red dead redemption 2 pc",
+                "termos",
+                "kubek",
+                "kosiarka",
+                "kompter"
             };
 
-            return new JsonResult(results);
+            _ceneoHandler.ScrapingTest(names);
+            return new JsonResult("result");
         }
     }
 }

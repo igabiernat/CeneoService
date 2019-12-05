@@ -25,6 +25,18 @@ namespace CeneoRest.Ceneo
         private int _errorProductCounter = 0;
         private int _errorLimit = 20;
 
+        public void ScrapingTest(List<string> names)
+        {
+            var web = new HtmlWeb();
+            foreach (var name in names)
+            {
+                var uri = $"http://ceneo.pl/szukaj-{name};0112-0.htm";
+                var doc = web.Load(uri);
+                var content2 = doc.Text;
+                WriteHtmlToFile(name, content2);
+            }
+        }
+
         public async Task<IActionResult> HandleSearchRequest(List<ProductDto> products)
         {
 
@@ -218,6 +230,8 @@ namespace CeneoRest.Ceneo
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync(uri);
             var contents = await response.Content.ReadAsStringAsync();
+
+
             if (contents.Contains("nieprawidłowa domena dla klucza witryny"))
             {
                 Log.Error("CAPTCHA SHOWED - nothing to do here");
