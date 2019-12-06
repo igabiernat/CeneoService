@@ -85,16 +85,29 @@ namespace CeneoRest.Ceneo
             //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
             var sortedLists =_sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
             var groupedShopping = new List<SearchResult>();
+            var groupedShoppingTmp = new List<SearchResult>();
+            var currentListCount = -1;
             foreach (var list in sortedLists)
             {
-                var currentListCount = list.Count;
+                if (list.Count != currentListCount)
+                {
+                    currentListCount = list.Count;
+                    groupedShopping.AddRange(groupedShoppingTmp);
+                    groupedShoppingTmp = new List<SearchResult>();
+                }
                 foreach (var product in list)
                 {
-                    if (groupedShopping.All(p => p.Info != product.Info))
+                    if (groupedShoppingTmp.Any(p => p.Info == product.Info))
                     {
-                        if (groupedShopping.Any(p => p.SellersName == product.SellersName))
-                            product.ShippingCost = 0;
-
+                        var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
+                        if (old.Price > product.Price)
+                        {
+                            groupedShoppingTmp.Remove(old);
+                            groupedShoppingTmp.Add(product);
+                        }
+                    }
+                    else
+                    {
                         groupedShopping.Add(product);
                     }
                 }
