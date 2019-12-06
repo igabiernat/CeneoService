@@ -42,6 +42,16 @@ namespace CeneoRest.Ceneo
             }
 
             Log.Information("STOP");
+
+            foreach (var product in _allProducts)
+            {
+                if (!sellersProducts.ContainsKey(product.SellersName))
+                    sellersProducts.Add(product.SellersName, new List<string>());
+                sellersProducts[product.SellersName].Add(product.Info);
+                //if (sellersProducts[product.SellersName].Contains(product.Info)
+            }
+            
+
             return new JsonResult(_searchResults);
         }
 
@@ -178,7 +188,9 @@ namespace CeneoRest.Ceneo
                     .Descendants("h1").First(node => node.GetAttributeValue("class", "")
                         .Contains("product-name js_product-h1-link")).InnerText;
 
-                var searchResult = CreateSearchResult(shopChosen, name);
+                var info = productDto.name;
+
+                var searchResult = CreateSearchResult(shopChosen, name, info);
                 productSearchResults.Add(searchResult);
                 _allProducts.Add(searchResult);
 
@@ -186,7 +198,8 @@ namespace CeneoRest.Ceneo
 
             if (productSearchResults.Count == 0)
             {
-                var searchResult = CreateSearchResult(shopsList[0], productDto.name);
+                var info = productDto.name;
+                var searchResult = CreateSearchResult(shopsList[0], productDto.name, info);
                 productSearchResults.Add(searchResult);
             }
 
@@ -204,7 +217,7 @@ namespace CeneoRest.Ceneo
             return shipString;
         }
 
-        private SearchResult CreateSearchResult(HtmlNode shopChosen, string name)
+        private SearchResult CreateSearchResult(HtmlNode shopChosen, string name, string productInfo)
         {
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
 
@@ -235,6 +248,7 @@ namespace CeneoRest.Ceneo
             return new SearchResult
             {
                 Name = name,
+                Info = productInfo,
                 Price = price,
                 SellersName = sellersName,
                 ShippingCost = ship,
