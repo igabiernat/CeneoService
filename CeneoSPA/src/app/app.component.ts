@@ -74,7 +74,7 @@ export class AppComponent implements OnInit{
 
 
       for(let i of this.ceneoApiInfo){
-        //console.log( this.ceneoApiInfo(i) );
+        
         this.totalPrice = Number(i.price);
         
       }  
@@ -106,24 +106,41 @@ export class AppComponent implements OnInit{
     this.product4.num = no4;
     this.product5.num = no5;
 
-    if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5){
-      this.note1 = true;
-    }if(min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
-      this.note2 = true;
+    this.product1.min_price = min1;
+    this.product2.min_price = min2;
+    this.product3.min_price = min3;
+    this.product4.min_price = min4;
+    this.product5.min_price = min5;
+
+    max1 = (max1 == 0 ? min1 : max1 );
+    max2 = (max2 == 0 ? min2 : max2 );
+    max3 = (max3 == 0 ? min3 : max3 );
+    max4 = (max4 == 0 ? min4 : max4 );
+    max5 = (max5 == 0 ? min5 : max5 );
+
+    this.product1.max_price = max1;
+    this.product2.max_price = max2;
+    this.product3.max_price = max3;
+    this.product4.max_price = max4;
+    this.product5.max_price = max5;
+
+    //## price validation
+    if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5||min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
+      if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5){
+        this.note1 = true;
+      }else{
+        this.note1 = false;
+      }
+      if(min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
+        this.note2 = true;
+      }else{
+        this.note2 = false;
+      }
+
     }else{
       this.note1 = false;
       this.note2 = false;
-      this.product1.min_price = min1;
-      this.product2.min_price = min2;
-      this.product3.min_price = min3;
-      this.product4.min_price = min4;
-      this.product5.min_price = min5;
 
-      this.product1.max_price = max1;
-      this.product2.max_price = max2;
-      this.product3.max_price = max3;
-      this.product4.max_price = max4;
-      this.product5.max_price = max5;
 
       this.search1 = false;
       this.submit = true;
