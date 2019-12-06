@@ -13,6 +13,7 @@ export class AppComponent implements OnInit{
   title = 'CeneoSPA';
   public search1 = true;
   public submit = false;
+  public totalPrice = 0;
   ceneoApiInfo: any;
   
   product1 =  new Product();
@@ -23,7 +24,7 @@ export class AppComponent implements OnInit{
   input = [this.product1, this.product2, this.product3, this.product4, this.product5];
   //arrayResults: SearchResult[];
   //arrayResults = [new SearchResult, new SearchResult, new SearchResult, new SearchResult, new SearchResult]
-  public totalPrice = 0;
+  
 
 
   constructor(private http: HttpClient) { 
@@ -67,9 +68,11 @@ export class AppComponent implements OnInit{
   summary(){
    
     
-      for(var i in this.ceneoApiInfo){
-        this.totalPrice += Number(i['price']) + Number(i['shippingCost']);
+      for(let i of this.ceneoApiInfo){
+        this.totalPrice = Number(i['price']);
+        
     }
+    //this.totalPrice = this.ceneoApiInfo['price'];
   }
 
 
