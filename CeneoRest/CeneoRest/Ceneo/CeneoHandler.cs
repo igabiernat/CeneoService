@@ -49,13 +49,16 @@ namespace CeneoRest.Ceneo
         {
             try
             {
-                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')}";
+                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
+
                 var pageContents = await ScrapPage(uri);
-                WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
+                //WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                 var pageDocument = new HtmlDocument();
                 pageDocument.LoadHtml(pageContents);
                 //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
+                Log.Fatal(uri);
                 var result = await CalculateBestSearchResult(pageDocument, productDto);
+
                 _errorCounter = 0;
             }
             catch (Exception e)
@@ -80,7 +83,6 @@ namespace CeneoRest.Ceneo
             int index = 0;
             for (int i = 0; i<shops.Count; i = i + 2)
             {
-                
                 var startingPriceString = shops[i].Descendants("span")
                     .First(node => node.GetAttributeValue("class", "")
                     .Equals("price-format nowrap")).FirstChild.InnerText;
