@@ -29,49 +29,21 @@ namespace CeneoRest.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] List<ProductDto> products)
         {
-            //var result = await _ceneoHandler.HandleSearchRequest(products);
-            var results = new List<SearchResult>();
-            foreach (var product in products)
-            {
-                results.Add(new SearchResult
-                {
-                    Name = product.name,
-                    Info = "info",
-                    Price = product.max_price ?? 0,
-                });
-            }
-
-            return new JsonResult(results);
+            var result = await _ceneoHandler.HandleSearchRequest(products);
+            return new JsonResult(result);
         }
         [HttpGet("test")]
         public async Task<IActionResult> Test()
         {
-            //var products = new List<ProductDto>
-            //{
-            //    new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
-            //    new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"}
-            //};
-            //var result = await _ceneoHandler.HandleSearchRequest(products);
-            var results = new List<SearchResult>
+            var products = new List<ProductDto>
             {
-                new SearchResult
-                {
-                    Name = "nazwa", Info = "info", Link = "https://ceneo.pl", Price = 10, SellersName = "auchan",
-                    ShippingCost = 2.5M
-                },
-                new SearchResult
-                {
-                    Name = "nazwa2", Info = "info2", Link = "https://ceneo.pl", Price = 15, SellersName = "auchan",
-                    ShippingCost = 0
-                },
-                new SearchResult
-                {
-                    Name = "nazwa3", Info = "info3", Link = "https://ceneo.pl", Price = 215.42M, SellersName = "tesco",
-                    ShippingCost = 10
-                },
+                new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
+                new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"},
+                new ProductDto {num = 3,max_price = 200, min_price = 10, min_reputation = 3, name = "kubek"}
             };
 
-            return new JsonResult(results);
+            var result = await _ceneoHandler.HandleSearchRequest(products);
+            return new JsonResult(result);
         }
     }
 }

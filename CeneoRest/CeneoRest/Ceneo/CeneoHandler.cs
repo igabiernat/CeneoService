@@ -13,6 +13,7 @@ using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CeneoRest.Ceneo
 {
@@ -20,6 +21,7 @@ namespace CeneoRest.Ceneo
     {
         private readonly List<string> _usedSellers = new List<string>();
         private readonly List<SearchResult> _searchResults = new List<SearchResult>();
+        private List<SearchResult> _allProducts = new List<SearchResult>();
         private int _errorCounter = 0;
         private int _errorProductCounter = 0;
         private int _errorLimit = 20;
@@ -29,6 +31,7 @@ namespace CeneoRest.Ceneo
 
 
             var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
+            Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
                 _errorCounter = 0;
@@ -39,7 +42,6 @@ namespace CeneoRest.Ceneo
             }
 
             Log.Information("STOP");
-            _searchResults.Add(new SearchResult { Name = "testowy", Price = 9.5M });
             return new JsonResult(_searchResults);
         }
 
@@ -47,14 +49,16 @@ namespace CeneoRest.Ceneo
         {
             try
             {
-                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};0112-0.htm";
+                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
+
                 var pageContents = await ScrapPage(uri);
-                WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
+                //WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                 var pageDocument = new HtmlDocument();
                 pageDocument.LoadHtml(pageContents);
                 //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
-                var result =await CalculateBestSearchResult(pageDocument, productDto);
-                _searchResults.Add(result);
+                Log.Fatal(uri);
+                var result = await CalculateBestSearchResult(pageDocument, productDto);
+
                 _errorCounter = 0;
             }
             catch (Exception e)
@@ -72,11 +76,28 @@ namespace CeneoRest.Ceneo
             }
         }
 
-
-
-        private async Task<SearchResult> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
+        private async Task<List<SearchResult>> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
         {
-            var productId = pageDocument.DocumentNode.SelectSingleNode("(//div[contains(@class,'cat-prod-row js_category-list-item js_clickHashData js_man-track-event ')])").GetAttributeValue("data-pid","error");
+            var shops = pageDocument.DocumentNode.SelectNodes("//a[@class = 'js_seoUrl js_clickHash go-to-product']");
+            decimal minPrice = decimal.MaxValue;
+            int index = 0;
+            for (int i = 0; i<shops.Count; i = i + 2)
+            {
+                var startingPriceString = shops[i].Descendants("span")
+                    .First(node => node.GetAttributeValue("class", "")
+                    .Equals("price-format nowrap")).FirstChild.InnerText;
+
+                decimal startingPrice = decimal.Parse(startingPriceString);
+
+                if (startingPrice < minPrice)
+                {
+                    minPrice = startingPrice;
+                    index = i;
+                }
+                    
+            }
+            var productId = shops[index].GetAttributeValue("href","error");
+
             if (productId == "error")
             {
                 throw new Exception("CalculateBestSearchResult() error: productId not found");
@@ -84,21 +105,21 @@ namespace CeneoRest.Ceneo
 
             var offersCountedIntoAlgorithm = 5;
 
-            await GetSearchResultsForId(productId, productDto, offersCountedIntoAlgorithm);
+            var result = await GetSearchResultsForId(productId, productDto, offersCountedIntoAlgorithm);
 
-            var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
-            _usedSellers.Add(result.SellersName);
+            //var result = new SearchResult { Info = "Test", Price = 9.5M, ShippingCost = 1M, Name = "Testowy", Link = "https://www.ceneo.pl/", SellersName = "RTV EURO AGD"};
+            //_usedSellers.Add(result.SellersName);
             return result;
         }
 
         private async Task<List<SearchResult>> GetSearchResultsForId(string productId, ProductDto productDto, int offerscounted = 5)
         {
-            var uri = $"https://www.ceneo.pl/{productId.Trim()}";
+            var uri = $"https://www.ceneo.pl{productId.Trim()}";
             var pageDocument = new HtmlDocument();
             try
             {
                 var pageContents = await ScrapPage(uri);
-                WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
+                //WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
                 pageDocument.LoadHtml(pageContents);
             }
             catch (Exception e)
@@ -120,29 +141,38 @@ namespace CeneoRest.Ceneo
                     .Contains("product-offer clickable-offer js_offer-container-click")).ToList();
 
             var productSearchResults = new List<SearchResult>();
+
             for (int i = 0; i < shopsList.Count; i++)
             {
                 if (i >= offerscounted)
                     break;
     
                 var shopChosen = shopsList[i];
-                var rating = shopChosen //pobranie ilości gwiazdek
+                var ratingString = shopChosen //pobranie ilości gwiazdek
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
                         .Equals("screen-reader-text")).InnerText;
 
-                var numberOfRatings = shopChosen    //pobranie ilości opinii
+                ratingString = ratingString.Substring(0, ratingString.IndexOf("/"));
+                ratingString = Regex.Replace(ratingString, "[A-Za-z]", "");
+                decimal rating = decimal.Parse(ratingString);
+
+                var numberOfRatingsString = shopChosen    //pobranie ilości opinii
                     .Descendants("span").First(node => node.GetAttributeValue("class", "")
                         .Equals("dotted-link js_mini-shop-info js_no-conv")).InnerText;
 
-                //"Ocena 5 / 5"
-                //if (rating.Trim()[0] < 4)
-                //{
-                //    continue;
-                //}
-                //else if (Int32.Parse(numberOfRatings.Replace(" opinii", "")) < 20)
-                //{
-                //    continue;
-                //}
+                numberOfRatingsString = Regex.Replace(numberOfRatingsString, "[A-Za-z]", "");
+                decimal numberOfRatings = decimal.Parse(numberOfRatingsString);
+
+                String shipInfoString = GetShipString(shopChosen);
+                if (shipInfoString.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
+                    continue;
+
+                if (rating < 4)
+                    continue;
+
+                if (numberOfRatings < 20)
+                    continue;
+
 
                 var name = pageDocument.DocumentNode
                     .Descendants("h1").First(node => node.GetAttributeValue("class", "")
@@ -150,6 +180,8 @@ namespace CeneoRest.Ceneo
 
                 var searchResult = CreateSearchResult(shopChosen, name);
                 productSearchResults.Add(searchResult);
+                _allProducts.Add(searchResult);
+
             }
 
             if (productSearchResults.Count == 0)
@@ -164,52 +196,56 @@ namespace CeneoRest.Ceneo
             return productSearchResults;
         }
 
+        private String GetShipString(HtmlNode ShopChosen)
+        {
+            var shipString = ShopChosen.Descendants("div")
+                                .First(node => node.GetAttributeValue("class", "")
+                                .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+            return shipString;
+        }
+
         private SearchResult CreateSearchResult(HtmlNode shopChosen, string name)
         {
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
 
-            var price = shopChosen
+            var priceString = shopChosen
                 .Descendants("span").First(node => node.GetAttributeValue("class", "")
                     .Equals("price-format nowrap")).FirstChild.InnerText;
 
-            var ship = shopChosen
-                .Descendants("div").First(node => node.GetAttributeValue("class", "")
-                    .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+            decimal price = decimal.Parse(priceString);
 
-            if (ship.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
+            var shipInfoString = GetShipString(shopChosen);
+
+            decimal ship = 0;
+
+            if (shipInfoString.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
             {
-                ship = "0";
-            }
-            else if (ship.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
-            {
-                ship = "15";
+                ship = 0;
             }
             else
             {
-                ship = (Decimal.Parse(ship.Replace("z wysyłką od ","").Replace(" zł","").Trim()) - Decimal.Parse(price.Trim())).ToString();
+                String withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
+                decimal withShipping = decimal.Parse(withShippingString);
+                ship = withShipping - price;
             }
 
 
             return new SearchResult
             {
                 Name = name,
-                Price = Decimal.Parse(price.Trim()),
+                Price = price,
                 SellersName = sellersName,
-                ShippingCost = Decimal.Parse(ship.Trim()),
+                ShippingCost = ship,
             };
         }
 
         private async Task<string> ScrapPage(string uri)
         {
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(uri);
-            var contents = await response.Content.ReadAsStringAsync();
-            if (contents.Contains("nieprawidłowa domena dla klucza witryny"))
-            {
-                Log.Error("CAPTCHA SHOWED - nothing to do here");
-                throw new Exception("CAPTCHA SHOWED - nothing to do here");
-            }
-            return contents;
+            var web = new HtmlWeb();
+            var doc = await web.LoadFromWebAsync(uri);
+            var content = doc.Text;
+
+            return content;
         }
         private void WriteHtmlToFile(string fileName, string pageContents)
         {
