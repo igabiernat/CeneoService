@@ -229,6 +229,8 @@ namespace CeneoRest.Ceneo
                 ship = withShipping - price;
             }
 
+            var link = $"http://ceneo.pl{shopChosen.SelectSingleNode("//a[@class = 'btn btn-primary btn-m btn-cta go-to-shop']").GetAttributeValue("href","")}";
+
 
             return new SearchResult
             {
@@ -236,6 +238,7 @@ namespace CeneoRest.Ceneo
                 Price = price,
                 SellersName = sellersName,
                 ShippingCost = ship,
+                Link = link
             };
         }
 
