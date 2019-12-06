@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Text;
 using System.Text.RegularExpressions;
+using CeneoRest.resources;
+using Microsoft.Extensions.Configuration;
 
 namespace CeneoRest.Ceneo
 {
@@ -24,10 +26,11 @@ namespace CeneoRest.Ceneo
         private List<SearchResult> _allProducts = new List<SearchResult>();
         private int _errorCounter = 0;
         private int _errorProductCounter = 0;
-        private int _errorLimit = 20;
+        private string _mode;
 
-        public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products)
+        public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products, IConfiguration config)
         {
+            _mode = config.GetSection("Mode").Value;
             Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
@@ -56,29 +59,33 @@ namespace CeneoRest.Ceneo
         {
             try
             {
-                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
-
-                var pageContents = await ScrapPage(uri);
-                //WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                 var pageDocument = new HtmlDocument();
-                pageDocument.LoadHtml(pageContents);
-                //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
-                Log.Fatal(uri);
+                if (_mode == "offline")
+                {
+                    pageDocument.Load($"{productDto.name}.html");    //na razie z pliku
+                }
+                else
+                {
+                    var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
+                    var pageContents = await ScrapPage(uri);
+                    WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
+                    pageDocument.LoadHtml(pageContents);
+                }
+                
                 var result = await CalculateBestSearchResult(pageDocument, productDto);
-
                 _errorCounter = 0;
             }
             catch (Exception e)
             {
                 _errorCounter++;
                 Log.Error($"Error {_errorCounter} for {productDto.name} occured: {e.Message}");
-                if (_errorCounter < _errorLimit)
+                if (_errorCounter < Constants.ErrorsLimit)
                 {
                     await GetSearchResult(productDto);
                 }
                 else
                 {
-                    Log.Fatal($"Maximum {_errorLimit} tries exceeded. Exception: {e.Message}");
+                    Log.Fatal($"Maximum {Constants.ErrorsLimit} tries exceeded. Exception: {e.Message}");
                 }
             }
         }
@@ -121,25 +128,32 @@ namespace CeneoRest.Ceneo
 
         private async Task<List<SearchResult>> GetSearchResultsForId(string productId, ProductDto productDto, int offerscounted = 5)
         {
-            var uri = $"https://www.ceneo.pl{productId.Trim()}";
             var pageDocument = new HtmlDocument();
             try
             {
-                var pageContents = await ScrapPage(uri);
-                //WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
-                pageDocument.LoadHtml(pageContents);
+                if (_mode == "offline")
+                {
+                    pageDocument.Load($"{productDto.name}_details.html");
+                }
+                else
+                {
+                    var uri = $"https://www.ceneo.pl{productId.Trim()}";
+                    var pageContents = await ScrapPage(uri);
+                    WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
+                    pageDocument.LoadHtml(pageContents);
+                }
             }
             catch (Exception e)
             {
                 _errorProductCounter++;
                 Log.Error($"Error {_errorProductCounter} for productId {productId} occured: {e.Message}");
-                if (_errorProductCounter < _errorLimit)
+                if (_errorProductCounter < Constants.ErrorsLimit)
                 {
                     await GetSearchResultsForId(productId, productDto, offerscounted);
                 }
                 else
                 {
-                    Log.Fatal($"Maximum {_errorLimit} tries exceeded for productId {productId}. Exception: {e.Message}");
+                    Log.Fatal($"Maximum {Constants.ErrorsLimit} tries exceeded for productId {productId}. Exception: {e.Message}");
                 }
             }
 
