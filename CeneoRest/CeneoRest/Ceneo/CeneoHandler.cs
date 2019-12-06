@@ -42,7 +42,6 @@ namespace CeneoRest.Ceneo
             }
 
             Log.Information("STOP");
-            //_searchResults.Add(new SearchResult { Name = "testowy", Price = 9.5M });
             return new JsonResult(_searchResults);
         }
 
@@ -73,8 +72,6 @@ namespace CeneoRest.Ceneo
                 }
             }
         }
-
-
 
         private async Task<List<SearchResult>> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
         {
@@ -142,8 +139,6 @@ namespace CeneoRest.Ceneo
                     .Contains("product-offer clickable-offer js_offer-container-click")).ToList();
 
             var productSearchResults = new List<SearchResult>();
-            List<string> sellers = new List<string>();
-            List<string> products = new List<string>();
 
             for (int i = 0; i < shopsList.Count; i++)
             {
@@ -166,11 +161,16 @@ namespace CeneoRest.Ceneo
                 numberOfRatingsString = Regex.Replace(numberOfRatingsString, "[A-Za-z]", "");
                 decimal numberOfRatings = decimal.Parse(numberOfRatingsString);
 
+                String shipInfoString = GetShipString(shopChosen);
+                if (shipInfoString.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
+                    continue;
+
                 if (rating < 4)
                     continue;
 
                 if (numberOfRatings < 20)
                     continue;
+
 
                 var name = pageDocument.DocumentNode
                     .Descendants("h1").First(node => node.GetAttributeValue("class", "")
@@ -179,11 +179,6 @@ namespace CeneoRest.Ceneo
                 var searchResult = CreateSearchResult(shopChosen, name);
                 productSearchResults.Add(searchResult);
                 _allProducts.Add(searchResult);
-
-                //if (sellersProducts.ContainsKey(searchResult.SellersName))
-                //    sellersProducts[searchResult.SellersName]
-                //else
-                //    sellersProducts.Add(searchResult.SellersName, searchResult.Name);
 
             }
 
@@ -199,7 +194,14 @@ namespace CeneoRest.Ceneo
             return productSearchResults;
         }
 
-       
+        private String GetShipString(HtmlNode ShopChosen)
+        {
+            var shipString = ShopChosen.Descendants("div")
+                                .First(node => node.GetAttributeValue("class", "")
+                                .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+            return shipString;
+        }
+
         private SearchResult CreateSearchResult(HtmlNode shopChosen, string name)
         {
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
@@ -210,19 +212,13 @@ namespace CeneoRest.Ceneo
 
             decimal price = decimal.Parse(priceString);
 
-            var shipInfoString = shopChosen
-                .Descendants("div").First(node => node.GetAttributeValue("class", "")
-                    .Equals("product-delivery-info js_deliveryInfo")).InnerText;
+            var shipInfoString = GetShipString(shopChosen);
 
             decimal ship = 0;
 
             if (shipInfoString.Contains("Darmowa",StringComparison.OrdinalIgnoreCase))
             {
                 ship = 0;
-            }
-            else if (shipInfoString.Contains("szczeg", StringComparison.CurrentCultureIgnoreCase))
-            {
-                ship = 15;
             }
             else
             {
