@@ -120,14 +120,16 @@
                       </div>
                       <div class ="box">
                         <p class="label">About whole search:</p>
-                        <div class="field">
-                            <div class="control">
-                              <label class="checkbox">
-                                <input type="checkbox">
-                                The best saller rating
-                              </label>
-                            </div>
-                        </div>  
+                        
+                        <p class = "note">
+                          By default - the best saller rating and the lowest product price
+                        </p> 
+                        <p class="label"></p>
+                        <div *ngIf="note" class="notification is-danger">
+                          
+                           <strong>There is a mistake!</strong> Minimum price cannot be higher than maximum one.
+                          
+                        </div>
 
                           <a class="button is-focused" (click) = "onClickMe(box1.value, box2.value, box3.value, box4.value, box5.value,
                            box1no.value, box2no.value, box3no.value, box4no.value, box5no.value,
@@ -147,9 +149,9 @@
                         <div class="box" *ngFor="let result of ceneoApiInfo">
                             
                           <p>Name:  {{result['name']}}</p>
-                          <p>Price: {{result['price']}} zł</p> 
+                          <p #price>Price: {{result['price']}} zł</p> 
                           <p>Shipping: {{result['shippingCost']}} zł</p>
-                          <p>Link: <a href="{{result.link}}">{{result['link']}}</a> </p>
+                          <p>Link: <a href="{{result['link']}}">{{result['link']}}</a> </p>
                           <p>Info: {{result['info']}}</p>
                           <p>Seller: {{result['sellersName']}}</p>
                           
