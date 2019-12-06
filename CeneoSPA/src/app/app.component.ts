@@ -13,7 +13,8 @@ export class AppComponent implements OnInit{
   title = 'CeneoSPA';
   public search1 = true;
   public submit = false;
-  public note = false;
+  public note1 = false;
+  public note2 = false;
   totalPrice: number;
   ceneoApiInfo: any;
   mapa: any;
@@ -106,10 +107,12 @@ export class AppComponent implements OnInit{
     this.product5.num = no5;
 
     if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5){
-      this.note = true;
-      
+      this.note1 = true;
+    }if(min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
+      this.note2 = true;
     }else{
-      this.note = false;
+      this.note1 = false;
+      this.note2 = false;
       this.product1.min_price = min1;
       this.product2.min_price = min2;
       this.product3.min_price = min3;

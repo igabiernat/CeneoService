@@ -121,7 +121,7 @@
                       <div class ="box">
                         <p class="label">About whole search:</p>
                         
-                        <p class = "note">
+                        <p class = "note1">
                           By default - the best saller rating and the lowest product price
                         </p> 
                         <p class="label"></p>
@@ -130,6 +130,11 @@
                            <strong>There is a mistake!</strong> Minimum price cannot be higher than maximum one.
                           
                         </div>
+                        <div *ngIf="note2" class="notification is-danger">
+                          
+                          <strong>There is a mistake!</strong> Price cannot be negative.
+                         
+                       </div>
 
                           <a class="button is-focused" (click) = "onClickMe(box1.value, box2.value, box3.value, box4.value, box5.value,
                            box1no.value, box2no.value, box3no.value, box4no.value, box5no.value,
