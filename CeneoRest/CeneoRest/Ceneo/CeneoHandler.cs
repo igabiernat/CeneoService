@@ -19,18 +19,15 @@ namespace CeneoRest.Ceneo
 {
     public  class CeneoHandler
     {
-        private readonly List<string> _usedSellers = new List<string>();
+        private Dictionary<string, List<SearchResult>> _sellersProducts = new Dictionary<string, List<SearchResult>>();
         private readonly List<SearchResult> _searchResults = new List<SearchResult>();
         private List<SearchResult> _allProducts = new List<SearchResult>();
         private int _errorCounter = 0;
         private int _errorProductCounter = 0;
         private int _errorLimit = 20;
 
-        public async Task<IActionResult> HandleSearchRequest(List<ProductDto> products)
+        public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products)
         {
-
-
-            var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
             Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
@@ -52,7 +49,7 @@ namespace CeneoRest.Ceneo
             }
             
 
-            return new JsonResult(_searchResults);
+            return _searchResults;
         }
 
         private async Task GetSearchResult(ProductDto productDto)
