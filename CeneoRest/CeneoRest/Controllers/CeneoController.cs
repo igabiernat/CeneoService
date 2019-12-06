@@ -6,6 +6,7 @@ using CeneoRest.Ceneo;
 using CeneoRest.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace CeneoRest.Controllers
 {
@@ -13,10 +14,12 @@ namespace CeneoRest.Controllers
     [ApiController]
     public class CeneoController : ControllerBase
     {
+        private readonly IConfiguration _config;
         private readonly CeneoHandler _ceneoHandler = new CeneoHandler();
 
-        public CeneoController()
-        { 
+        public CeneoController(IConfiguration config)
+        {
+            _config = config;
         }
 
         // GET: api/Ceneo
@@ -29,7 +32,7 @@ namespace CeneoRest.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] List<ProductDto> products)
         {
-            var result = await _ceneoHandler.HandleSearchRequest(products);
+            var result = await _ceneoHandler.HandleSearchRequest(products, _config);
             return new JsonResult(result);
         }
         [HttpGet("test")]
@@ -42,7 +45,7 @@ namespace CeneoRest.Controllers
                 new ProductDto {num = 3,max_price = 200, min_price = 10, min_reputation = 3, name = "kubek"}
             };
 
-            var result = await _ceneoHandler.HandleSearchRequest(products);
+            var result = await _ceneoHandler.HandleSearchRequest(products, _config);
             return new JsonResult(result);
         }
     }

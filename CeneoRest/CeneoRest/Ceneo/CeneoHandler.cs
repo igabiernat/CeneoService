@@ -14,23 +14,23 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Text;
 using System.Text.RegularExpressions;
+using CeneoRest.resources;
+using Microsoft.Extensions.Configuration;
 
 namespace CeneoRest.Ceneo
 {
     public  class CeneoHandler
     {
-        private readonly List<string> _usedSellers = new List<string>();
-        private readonly List<SearchResult> _searchResults = new List<SearchResult>();
-        private List<SearchResult> _allProducts = new List<SearchResult>();
+        
+        private readonly List<SearchResult> _cheapestSingleResults = new List<SearchResult>();
+        private readonly List<SearchResult> _allProducts = new List<SearchResult>();
         private int _errorCounter = 0;
         private int _errorProductCounter = 0;
-        private int _errorLimit = 20;
+        private string _mode;
 
-        public async Task<IActionResult> HandleSearchRequest(List<ProductDto> products)
+        public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products, IConfiguration config)
         {
-
-
-            var usedSellers = new List<string>(); //Do tej listy zapiszemy sprzedawcow u ktorych wybralismy juz produkty. Zrobimy to po to, by kazdy nastepny produkt u tego samego sprzedawcy mial wysylke za 0.
+            _mode = config.GetSection("Mode").Value;
             Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
@@ -42,36 +42,145 @@ namespace CeneoRest.Ceneo
             }
 
             Log.Information("STOP");
-            return new JsonResult(_searchResults);
+
+            var _sellersProducts = new Dictionary<string, List<SearchResult>>();
+            foreach (SearchResult product in _allProducts)
+            {
+                //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
+                if (_sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
+                {
+                    //Sprawdzamy czy mamy już taki produkt w słowniku
+                    if (searchResults.Select(p => p.Info).Contains(product.Info))
+                    {
+                        var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
+                        var oldPrice = old?.Price + old?.ShippingCost;
+                        var newPrice = product?.Price + product?.ShippingCost;
+
+                        if (newPrice < oldPrice)
+                        {
+                            searchResults.Remove(old);
+                            searchResults.Add(product);
+                        }
+                    }
+                    else
+                    {
+                        searchResults.Add(product);
+                    }
+                }
+                else
+                {
+                    _sellersProducts.Add(product.SellersName, new List<SearchResult>{ product});
+                }
+
+                //IGA
+                if (!sellersProducts.ContainsKey(product.SellersName))
+                    sellersProducts.Add(product.SellersName, new List<string>());
+                sellersProducts[product.SellersName].Add(product.Info);
+                //if (sellersProducts[product.SellersName].Contains(product.Info)
+            }
+
+            //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
+            var sortedLists =_sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
+            var groupedShopping = new List<SearchResult>();
+            foreach (var list in sortedLists)
+            {
+                var currentListCount = list.Count;
+                foreach (var product in list)
+                {
+                    if (groupedShopping.All(p => p.Info != product.Info))
+                    {
+                        if (groupedShopping.Any(p => p.SellersName == product.SellersName))
+                            product.ShippingCost = 0;
+
+                        groupedShopping.Add(product);
+                    }
+                }
+            }
+            
+            RemoveShippingCostsForSameSeller(_cheapestSingleResults);
+            RemoveShippingCostsForSameSeller(groupedShopping);
+
+            var groupedShoppingPrice = SumOrderPrice(groupedShopping);
+            var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
+
+            if (cheapestSinglePrice >= groupedShoppingPrice)
+            {
+                return groupedShopping;
+            }
+            else
+            {
+                return _cheapestSingleResults;
+            }
+        }
+
+        private decimal SumOrderPrice(List<SearchResult> searchResults)
+        {
+            decimal price = 0;
+            foreach (var searchResult in searchResults)
+            {
+                price += searchResult.Price + searchResult.ShippingCost;
+            }
+
+            return price;
+        }
+
+        private void RemoveShippingCostsForSameSeller(List<SearchResult> searchResults)
+        {
+            var sellersShipping = new Dictionary<string,decimal>();
+            foreach (var searchResult in searchResults)
+            {
+                if (sellersShipping.TryGetValue(searchResult.SellersName, out decimal shippingCost))
+                {
+                    if (shippingCost > searchResult.ShippingCost)
+                            shippingCost = searchResult.ShippingCost;
+                }
+                else
+                {
+                    sellersShipping.Add(searchResult.SellersName, searchResult.ShippingCost);
+                }
+
+                searchResult.ShippingCost = 0;
+            }
+
+            foreach (var searchResult in searchResults)
+            {
+                sellersShipping.TryGetValue(searchResult.SellersName, out decimal shippingCost);
+                searchResult.ShippingCost = shippingCost;
+                shippingCost = 0;
+            }
         }
 
         private async Task GetSearchResult(ProductDto productDto)
         {
             try
             {
-                var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
-
-                var pageContents = await ScrapPage(uri);
-                //WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                 var pageDocument = new HtmlDocument();
-                pageDocument.LoadHtml(pageContents);
-                //pageDocument.Load("CeneoHTML.html");    //na razie z pliku
-                Log.Fatal(uri);
+                if (_mode == "offline")
+                {
+                    pageDocument.Load($"{productDto.name}.html");    //na razie z pliku
+                }
+                else
+                {
+                    var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
+                    var pageContents = await ScrapPage(uri);
+                    WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
+                    pageDocument.LoadHtml(pageContents);
+                }
+                
                 var result = await CalculateBestSearchResult(pageDocument, productDto);
-
                 _errorCounter = 0;
             }
             catch (Exception e)
             {
                 _errorCounter++;
                 Log.Error($"Error {_errorCounter} for {productDto.name} occured: {e.Message}");
-                if (_errorCounter < _errorLimit)
+                if (_errorCounter < Constants.ErrorsLimit)
                 {
                     await GetSearchResult(productDto);
                 }
                 else
                 {
-                    Log.Fatal($"Maximum {_errorLimit} tries exceeded. Exception: {e.Message}");
+                    Log.Fatal($"Maximum {Constants.ErrorsLimit} tries exceeded. Exception: {e.Message}");
                 }
             }
         }
@@ -79,9 +188,9 @@ namespace CeneoRest.Ceneo
         private async Task<List<SearchResult>> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
         {
             var shops = pageDocument.DocumentNode.SelectNodes("//a[@class = 'js_seoUrl js_clickHash go-to-product']");
-            decimal minPrice = decimal.MaxValue;
+            var minPrice = decimal.MaxValue;
             int index = 0;
-            for (int i = 0; i<shops.Count; i = i + 2)
+            for (int i = 0; i<shops.Count; i += 2)
             {
                 var startingPriceString = shops[i].Descendants("span")
                     .First(node => node.GetAttributeValue("class", "")
@@ -114,25 +223,32 @@ namespace CeneoRest.Ceneo
 
         private async Task<List<SearchResult>> GetSearchResultsForId(string productId, ProductDto productDto, int offerscounted = 5)
         {
-            var uri = $"https://www.ceneo.pl{productId.Trim()}";
             var pageDocument = new HtmlDocument();
             try
             {
-                var pageContents = await ScrapPage(uri);
-                //WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
-                pageDocument.LoadHtml(pageContents);
+                if (_mode == "offline")
+                {
+                    pageDocument.Load($"{productDto.name}_details.html");
+                }
+                else
+                {
+                    var uri = $"https://www.ceneo.pl{productId.Trim()}";
+                    var pageContents = await ScrapPage(uri);
+                    WriteHtmlToFile($"{productDto.name}_{productId.Remove(0, 1)}", pageContents); //TODO DELETE BEFORE RELEASE
+                    pageDocument.LoadHtml(pageContents);
+                }
             }
             catch (Exception e)
             {
                 _errorProductCounter++;
                 Log.Error($"Error {_errorProductCounter} for productId {productId} occured: {e.Message}");
-                if (_errorProductCounter < _errorLimit)
+                if (_errorProductCounter < Constants.ErrorsLimit)
                 {
                     await GetSearchResultsForId(productId, productDto, offerscounted);
                 }
                 else
                 {
-                    Log.Fatal($"Maximum {_errorLimit} tries exceeded for productId {productId}. Exception: {e.Message}");
+                    Log.Fatal($"Maximum {Constants.ErrorsLimit} tries exceeded for productId {productId}. Exception: {e.Message}");
                 }
             }
 
@@ -178,7 +294,9 @@ namespace CeneoRest.Ceneo
                     .Descendants("h1").First(node => node.GetAttributeValue("class", "")
                         .Contains("product-name js_product-h1-link")).InnerText;
 
-                var searchResult = CreateSearchResult(shopChosen, name);
+                var info = productDto.name;
+
+                var searchResult = CreateSearchResult(shopChosen, name, info);
                 productSearchResults.Add(searchResult);
                 _allProducts.Add(searchResult);
 
@@ -186,25 +304,26 @@ namespace CeneoRest.Ceneo
 
             if (productSearchResults.Count == 0)
             {
-                var searchResult = CreateSearchResult(shopsList[0], productDto.name);
+                var info = productDto.name;
+                var searchResult = CreateSearchResult(shopsList[0], productDto.name, info);
                 productSearchResults.Add(searchResult);
             }
 
-            _searchResults.Add(productSearchResults[0]);
+            _cheapestSingleResults.Add(productSearchResults[0]);
 
 
             return productSearchResults;
         }
 
-        private String GetShipString(HtmlNode ShopChosen)
+        private String GetShipString(HtmlNode shopChosen)
         {
-            var shipString = ShopChosen.Descendants("div")
+            var shipString = shopChosen.Descendants("div")
                                 .First(node => node.GetAttributeValue("class", "")
                                 .Equals("product-delivery-info js_deliveryInfo")).InnerText;
             return shipString;
         }
 
-        private SearchResult CreateSearchResult(HtmlNode shopChosen, string name)
+        private SearchResult CreateSearchResult(HtmlNode shopChosen, string name, string productInfo)
         {
             var sellersName = shopChosen.GetAttributeValue("data-shopurl", "");
 
@@ -212,7 +331,7 @@ namespace CeneoRest.Ceneo
                 .Descendants("span").First(node => node.GetAttributeValue("class", "")
                     .Equals("price-format nowrap")).FirstChild.InnerText;
 
-            decimal price = decimal.Parse(priceString);
+            var price = decimal.Parse(priceString);
 
             var shipInfoString = GetShipString(shopChosen);
 
@@ -224,18 +343,22 @@ namespace CeneoRest.Ceneo
             }
             else
             {
-                String withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
-                decimal withShipping = decimal.Parse(withShippingString);
+                var withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
+                var withShipping = decimal.Parse(withShippingString);
                 ship = withShipping - price;
             }
+
+            var link = $"http://ceneo.pl{shopChosen.SelectSingleNode("//a[@class = 'btn btn-primary btn-m btn-cta go-to-shop']").GetAttributeValue("href","")}";
 
 
             return new SearchResult
             {
                 Name = name,
+                Info = productInfo,
                 Price = price,
                 SellersName = sellersName,
                 ShippingCost = ship,
+                Link = link
             };
         }
 
