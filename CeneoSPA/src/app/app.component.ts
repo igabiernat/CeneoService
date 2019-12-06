@@ -13,7 +13,10 @@ export class AppComponent implements OnInit{
   title = 'CeneoSPA';
   public search1 = true;
   public submit = false;
+  public note = false;
+  totalPrice: number;
   ceneoApiInfo: any;
+  mapa: any;
   
   product1 =  new Product();
   product2 =  new Product();
@@ -23,7 +26,7 @@ export class AppComponent implements OnInit{
   input = [this.product1, this.product2, this.product3, this.product4, this.product5];
   //arrayResults: SearchResult[];
   //arrayResults = [new SearchResult, new SearchResult, new SearchResult, new SearchResult, new SearchResult]
-  public totalPrice = 0;
+  
 
 
   constructor(private http: HttpClient) { 
@@ -56,6 +59,7 @@ export class AppComponent implements OnInit{
   getCeneoApiInfo(){
     this.http.get('http://localhost:5000/api/ceneo/test').subscribe(response => {
       this.ceneoApiInfo = response;
+      this.mapa = response["price"];
       //this.arrayResults = JSON.parse(this.ceneoApiInfo);
     }, error => {
       console.log(error);
@@ -65,12 +69,16 @@ export class AppComponent implements OnInit{
 
   //## beginning of summary ##
   summary(){
-   
     
-      for(var i in this.ceneoApiInfo){
-        this.totalPrice += Number(i['price']) + Number(i['shippingCost']);
-    }
+
+
+      for(let i of this.ceneoApiInfo){
+        //console.log( this.ceneoApiInfo(i) );
+        this.totalPrice = Number(i.price);
+        
+      }  
   }
+
 
 
   //## on tab results, come back to searching ##
@@ -97,23 +105,29 @@ export class AppComponent implements OnInit{
     this.product4.num = no4;
     this.product5.num = no5;
 
-    this.product1.min_price = min1;
-    this.product2.min_price = min2;
-    this.product3.min_price = min3;
-    this.product4.min_price = min4;
-    this.product5.min_price = min5;
+    if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5){
+      this.note = true;
+      
+    }else{
+      this.note = false;
+      this.product1.min_price = min1;
+      this.product2.min_price = min2;
+      this.product3.min_price = min3;
+      this.product4.min_price = min4;
+      this.product5.min_price = min5;
 
-    this.product1.max_price = max1;
-    this.product2.max_price = max2;
-    this.product3.max_price = max3;
-    this.product4.max_price = max4;
-    this.product5.max_price = max5;
+      this.product1.max_price = max1;
+      this.product2.max_price = max2;
+      this.product3.max_price = max3;
+      this.product4.max_price = max4;
+      this.product5.max_price = max5;
 
-    this.search1 = false;
-    this.submit = true;
-    this.postOnCeneoApi();
-    this.getCeneoApiInfo();
-    this.summary();
+      this.search1 = false;
+      this.submit = true;
+      this.postOnCeneoApi();
+      this.getCeneoApiInfo();
+      this.summary();
+    }
   }
 
 }
