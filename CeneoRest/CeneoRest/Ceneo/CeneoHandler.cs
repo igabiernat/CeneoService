@@ -21,9 +21,9 @@ namespace CeneoRest.Ceneo
 {
     public  class CeneoHandler
     {
-        private Dictionary<string, List<SearchResult>> _sellersProducts = new Dictionary<string, List<SearchResult>>();
-        private readonly List<SearchResult> _searchResults = new List<SearchResult>();
-        private List<SearchResult> _allProducts = new List<SearchResult>();
+        
+        private readonly List<SearchResult> _cheapestSingleResults = new List<SearchResult>();
+        private readonly List<SearchResult> _allProducts = new List<SearchResult>();
         private int _errorCounter = 0;
         private int _errorProductCounter = 0;
         private string _mode;
@@ -43,16 +43,111 @@ namespace CeneoRest.Ceneo
 
             Log.Information("STOP");
 
-            foreach (var product in _allProducts)
+            var _sellersProducts = new Dictionary<string, List<SearchResult>>();
+            foreach (SearchResult product in _allProducts)
             {
+                //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
+                if (_sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
+                {
+                    //Sprawdzamy czy mamy już taki produkt w słowniku
+                    if (searchResults.Select(p => p.Info).Contains(product.Info))
+                    {
+                        var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
+                        var oldPrice = old?.Price + old?.ShippingCost;
+                        var newPrice = product?.Price + product?.ShippingCost;
+
+                        if (newPrice < oldPrice)
+                        {
+                            searchResults.Remove(old);
+                            searchResults.Add(product);
+                        }
+                    }
+                    else
+                    {
+                        searchResults.Add(product);
+                    }
+                }
+                else
+                {
+                    _sellersProducts.Add(product.SellersName, new List<SearchResult>{ product});
+                }
+
+                //IGA
                 if (!sellersProducts.ContainsKey(product.SellersName))
                     sellersProducts.Add(product.SellersName, new List<string>());
                 sellersProducts[product.SellersName].Add(product.Info);
                 //if (sellersProducts[product.SellersName].Contains(product.Info)
             }
-            
 
-            return _searchResults;
+            //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
+            var sortedLists =_sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
+            var groupedShopping = new List<SearchResult>();
+            foreach (var list in sortedLists)
+            {
+                var currentListCount = list.Count;
+                foreach (var product in list)
+                {
+                    if (groupedShopping.All(p => p.Info != product.Info))
+                    {
+                        if (groupedShopping.Any(p => p.SellersName == product.SellersName))
+                            product.ShippingCost = 0;
+
+                        groupedShopping.Add(product);
+                    }
+                }
+            }
+            
+            RemoveShippingCostsForSameSeller(_cheapestSingleResults);
+            RemoveShippingCostsForSameSeller(groupedShopping);
+
+            var groupedShoppingPrice = SumOrderPrice(groupedShopping);
+            var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
+
+            if (cheapestSinglePrice >= groupedShoppingPrice)
+            {
+                return groupedShopping;
+            }
+            else
+            {
+                return _cheapestSingleResults;
+            }
+        }
+
+        private decimal SumOrderPrice(List<SearchResult> searchResults)
+        {
+            decimal price = 0;
+            foreach (var searchResult in searchResults)
+            {
+                price += searchResult.Price + searchResult.ShippingCost;
+            }
+
+            return price;
+        }
+
+        private void RemoveShippingCostsForSameSeller(List<SearchResult> searchResults)
+        {
+            var sellersShipping = new Dictionary<string,decimal>();
+            foreach (var searchResult in searchResults)
+            {
+                if (sellersShipping.TryGetValue(searchResult.SellersName, out decimal shippingCost))
+                {
+                    if (shippingCost > searchResult.ShippingCost)
+                            shippingCost = searchResult.ShippingCost;
+                }
+                else
+                {
+                    sellersShipping.Add(searchResult.SellersName, searchResult.ShippingCost);
+                }
+
+                searchResult.ShippingCost = 0;
+            }
+
+            foreach (var searchResult in searchResults)
+            {
+                sellersShipping.TryGetValue(searchResult.SellersName, out decimal shippingCost);
+                searchResult.ShippingCost = shippingCost;
+                shippingCost = 0;
+            }
         }
 
         private async Task GetSearchResult(ProductDto productDto)
@@ -93,9 +188,9 @@ namespace CeneoRest.Ceneo
         private async Task<List<SearchResult>> CalculateBestSearchResult(HtmlDocument pageDocument, ProductDto productDto)
         {
             var shops = pageDocument.DocumentNode.SelectNodes("//a[@class = 'js_seoUrl js_clickHash go-to-product']");
-            decimal minPrice = decimal.MaxValue;
+            var minPrice = decimal.MaxValue;
             int index = 0;
-            for (int i = 0; i<shops.Count; i = i + 2)
+            for (int i = 0; i<shops.Count; i += 2)
             {
                 var startingPriceString = shops[i].Descendants("span")
                     .First(node => node.GetAttributeValue("class", "")
@@ -139,7 +234,7 @@ namespace CeneoRest.Ceneo
                 {
                     var uri = $"https://www.ceneo.pl{productId.Trim()}";
                     var pageContents = await ScrapPage(uri);
-                    WriteHtmlToFile(productId, pageContents); //TODO DELETE BEFORE RELEASE
+                    WriteHtmlToFile($"{productDto.name}_{productId.Remove(0, 1)}", pageContents); //TODO DELETE BEFORE RELEASE
                     pageDocument.LoadHtml(pageContents);
                 }
             }
@@ -214,15 +309,15 @@ namespace CeneoRest.Ceneo
                 productSearchResults.Add(searchResult);
             }
 
-            _searchResults.Add(productSearchResults[0]);
+            _cheapestSingleResults.Add(productSearchResults[0]);
 
 
             return productSearchResults;
         }
 
-        private String GetShipString(HtmlNode ShopChosen)
+        private String GetShipString(HtmlNode shopChosen)
         {
-            var shipString = ShopChosen.Descendants("div")
+            var shipString = shopChosen.Descendants("div")
                                 .First(node => node.GetAttributeValue("class", "")
                                 .Equals("product-delivery-info js_deliveryInfo")).InnerText;
             return shipString;
@@ -236,7 +331,7 @@ namespace CeneoRest.Ceneo
                 .Descendants("span").First(node => node.GetAttributeValue("class", "")
                     .Equals("price-format nowrap")).FirstChild.InnerText;
 
-            decimal price = decimal.Parse(priceString);
+            var price = decimal.Parse(priceString);
 
             var shipInfoString = GetShipString(shopChosen);
 
@@ -248,8 +343,8 @@ namespace CeneoRest.Ceneo
             }
             else
             {
-                String withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
-                decimal withShipping = decimal.Parse(withShippingString);
+                var withShippingString = Regex.Replace(shipInfoString, "[A-Za-złą]", "");
+                var withShipping = decimal.Parse(withShippingString);
                 ship = withShipping - price;
             }
 
