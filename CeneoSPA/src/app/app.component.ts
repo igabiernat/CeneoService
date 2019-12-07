@@ -15,9 +15,10 @@ export class AppComponent implements OnInit{
   public submit = false;
   public note1 = false;
   public note2 = false;
-  totalPrice: number;
+  public totalPrice;
   ceneoApiInfo: any;
-  mapa: any;
+  sumOfPrices: number[];
+  
   
   product1 =  new Product();
   product2 =  new Product();
@@ -37,7 +38,7 @@ export class AppComponent implements OnInit{
 
 
   ngOnInit() {
-    //this.getCeneoApiInfo();
+    this.getCeneoApiInfo();
   }
 
 
@@ -58,9 +59,9 @@ export class AppComponent implements OnInit{
 
   //## get results ##
   getCeneoApiInfo(){
-    this.http.get('http://localhost:5000/api/ceneo/test').subscribe(response => {
+    this.http.get('http://localhost:5000/api/ceneo/search').subscribe(response => {
       this.ceneoApiInfo = response;
-      this.mapa = response["price"];
+      
       //this.arrayResults = JSON.parse(this.ceneoApiInfo);
     }, error => {
       console.log(error);
@@ -75,9 +76,10 @@ export class AppComponent implements OnInit{
 
       for(let i of this.ceneoApiInfo){
         
-        this.totalPrice = Number(i.price);
+        this.sumOfPrices.push(Number(i.price));
         
-      }  
+      } 
+      this.totalPrice = this.sumOfPrices.reduce((a, b) => a + b, 0);
   }
 
 
