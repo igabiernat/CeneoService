@@ -33,10 +33,11 @@ namespace CeneoRest.Ceneo
             try
             {
                 _mode = config.GetSection("Mode").Value;
+                Log.Information($"Mode: {_mode}");
 
                 RemoveEmptyProducts(products);
+                LogProducts(products);
 
-                Dictionary<string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
                 foreach (var product in products)
                 {
                     _errorCounter = 0;
@@ -46,76 +47,9 @@ namespace CeneoRest.Ceneo
                     Log.Information($"{product.Name} foreach stop ");
                 }
 
-                Log.Information("STOP");
-
-                var _sellersProducts = new Dictionary<string, List<SearchResult>>();
-                foreach (SearchResult product in _allProducts)
-                {
-                    //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
-                    if (_sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
-                    {
-                        //Sprawdzamy czy mamy już taki produkt w słowniku
-                        if (searchResults.Select(p => p.Info).Contains(product.Info))
-                        {
-                            var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
-                            var oldPrice = old?.Price + old?.ShippingCost;
-                            var newPrice = product?.Price + product?.ShippingCost;
-
-                            if (newPrice < oldPrice)
-                            {
-                                searchResults.Remove(old);
-                                searchResults.Add(product);
-                            }
-                        }
-                        else
-                        {
-                            searchResults.Add(product);
-                        }
-                    }
-                    else
-                    {
-                        _sellersProducts.Add(product.SellersName, new List<SearchResult> {product});
-                    }
-
-                    //IGA
-                    if (!sellersProducts.ContainsKey(product.SellersName))
-                        sellersProducts.Add(product.SellersName, new List<string>());
-                    sellersProducts[product.SellersName].Add(product.Info);
-                    //if (sellersProducts[product.SellersName].Contains(product.Info)
-                }
-
-                //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
-                var sortedLists = _sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
-                var groupedShopping = new List<SearchResult>();
-                var groupedShoppingTmp = new List<SearchResult>();
-                var currentListCount = -1;
-                foreach (var list in sortedLists)
-                {
-                    if (list.Count != currentListCount)
-                    {
-                        currentListCount = list.Count;
-                        groupedShopping.AddRange(groupedShoppingTmp);
-                        groupedShoppingTmp = new List<SearchResult>();
-                    }
-
-                    foreach (var product in list)
-                    {
-                        if (groupedShoppingTmp.Any(p => p.Info == product.Info))
-                        {
-                            var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
-                            if (old.Price > product.Price)
-                            {
-                                groupedShoppingTmp.Remove(old);
-                                groupedShoppingTmp.Add(product.Clone());
-                            }
-                        }
-                        else
-                        {
-                            groupedShoppingTmp.Add(product.Clone());
-                        }
-                    }
-                }
-                groupedShopping.AddRange(groupedShoppingTmp);
+                var sellersProducts = CreateSellersProducts();
+                var groupedShopping = CreateGroupedShoppingList(sellersProducts);
+                
 
                 RemoveShippingCostsForSameSeller(_cheapestSingleResults);
                 RemoveShippingCostsForSameSeller(groupedShopping);
@@ -126,6 +60,8 @@ namespace CeneoRest.Ceneo
                 var groupedShoppingPrice = SumOrderPrice(groupedShopping);
                 var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
 
+                Log.Information($"grouped price: {groupedShoppingPrice}, cheapestFirst price: {cheapestSinglePrice}");
+                Log.Information("STOP");
                 if (_cheapestSingleResults.Count == groupedShopping.Count)
                 {
                     if (cheapestSinglePrice >= groupedShoppingPrice)
@@ -142,12 +78,96 @@ namespace CeneoRest.Ceneo
                     return _cheapestSingleResults.Count >= groupedShopping.Count
                         ? _cheapestSingleResults : groupedShopping;
                 }
+
             }
             catch (Exception e)
             {
                 Log.Fatal(e.Message);
                 return _cheapestSingleResults;
             }
+        }
+
+        private Dictionary<string, List<SearchResult>> CreateSellersProducts()
+        {
+            var sellersProducts = new Dictionary<string, List<SearchResult>>();
+            foreach (SearchResult product in _allProducts)
+            {
+                //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
+                if (sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
+                {
+                    //Sprawdzamy czy mamy już taki produkt w słowniku
+                    if (searchResults.Select(p => p.Info).Contains(product.Info))
+                    {
+                        var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
+                        var oldPrice = old?.Price + old?.ShippingCost;
+                        var newPrice = product?.Price + product?.ShippingCost;
+
+                        if (newPrice < oldPrice)
+                        {
+                            searchResults.Remove(old);
+                            searchResults.Add(product);
+                        }
+                    }
+                    else
+                    {
+                        searchResults.Add(product);
+                    }
+                }
+                else
+                {
+                    sellersProducts.Add(product.SellersName, new List<SearchResult> {product});
+                }
+            }
+            Log.Information($"Successfuly created dictionary with {sellersProducts.Count} keys.");
+            return sellersProducts;
+        }
+
+        private static List<SearchResult> CreateGroupedShoppingList(Dictionary<string, List<SearchResult>> sellersProducts)
+        {
+            //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
+            var sortedLists = sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
+            var groupedShopping = new List<SearchResult>();
+            var groupedShoppingTmp = new List<SearchResult>();
+            var currentListCount = -1;
+            foreach (var list in sortedLists)
+            {
+                if (list.Count != currentListCount)
+                {
+                    currentListCount = list.Count;
+                    groupedShopping.AddRange(groupedShoppingTmp);
+                    groupedShoppingTmp = new List<SearchResult>();
+                }
+
+                foreach (var product in list)
+                {
+                    if (groupedShoppingTmp.Any(p => p.Info == product.Info))
+                    {
+                        var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
+                        if (old?.Price < product.Price)
+                            continue;
+
+                        groupedShoppingTmp.Remove(old);
+                        groupedShoppingTmp.Add(product.Clone());
+                    }
+                    else
+                    {
+                        groupedShoppingTmp.Add(product.Clone());
+                    }
+                }
+            }
+            groupedShopping.AddRange(groupedShoppingTmp);
+
+            Log.Information($"Successfuly created groupedShopping list with {groupedShopping.Count} products.");
+            return groupedShopping;
+        }
+
+        private void LogProducts(List<ProductDto> products)
+        {
+            foreach (var productDto in products)
+            {
+                Log.Information($"ProductDTO: name: {productDto.Name}, num: {productDto.Num} min: {productDto.min_price} max: {productDto.max_price}");
+            }
+
         }
 
         private void MultiplyByQty(List<SearchResult> searchResults, List<ProductDto> products)
