@@ -30,104 +30,122 @@ namespace CeneoRest.Ceneo
 
         public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products, IConfiguration config)
         {
-            _mode = config.GetSection("Mode").Value;
-
-            RemoveEmptyProducts(products);
-
-            Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
-            foreach (var product in products)
+            try
             {
-                _errorCounter = 0;
-                _errorProductCounter = 0;
-                Log.Information($"{product.Name} foreach start");
-                await GetSearchResult(product);
-                Log.Information($"{product.Name} foreach stop ");
-            }
+                _mode = config.GetSection("Mode").Value;
 
-            Log.Information("STOP");
+                RemoveEmptyProducts(products);
 
-            var _sellersProducts = new Dictionary<string, List<SearchResult>>();
-            foreach (SearchResult product in _allProducts)
-            {
-                //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
-                if (_sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
+                Dictionary<string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
+                foreach (var product in products)
                 {
-                    //Sprawdzamy czy mamy już taki produkt w słowniku
-                    if (searchResults.Select(p => p.Info).Contains(product.Info))
-                    {
-                        var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
-                        var oldPrice = old?.Price + old?.ShippingCost;
-                        var newPrice = product?.Price + product?.ShippingCost;
+                    _errorCounter = 0;
+                    _errorProductCounter = 0;
+                    Log.Information($"{product.Name} foreach start");
+                    await GetSearchResult(product);
+                    Log.Information($"{product.Name} foreach stop ");
+                }
 
-                        if (newPrice < oldPrice)
+                Log.Information("STOP");
+
+                var _sellersProducts = new Dictionary<string, List<SearchResult>>();
+                foreach (SearchResult product in _allProducts)
+                {
+                    //Sprawdzamy czy mamy już tego sprzedawcę w słowniku
+                    if (_sellersProducts.TryGetValue(product.SellersName, out List<SearchResult> searchResults))
+                    {
+                        //Sprawdzamy czy mamy już taki produkt w słowniku
+                        if (searchResults.Select(p => p.Info).Contains(product.Info))
                         {
-                            searchResults.Remove(old);
+                            var old = searchResults.FirstOrDefault(p => p.Info == product.Info);
+                            var oldPrice = old?.Price + old?.ShippingCost;
+                            var newPrice = product?.Price + product?.ShippingCost;
+
+                            if (newPrice < oldPrice)
+                            {
+                                searchResults.Remove(old);
+                                searchResults.Add(product);
+                            }
+                        }
+                        else
+                        {
                             searchResults.Add(product);
                         }
                     }
                     else
                     {
-                        searchResults.Add(product);
+                        _sellersProducts.Add(product.SellersName, new List<SearchResult> {product});
+                    }
+
+                    //IGA
+                    if (!sellersProducts.ContainsKey(product.SellersName))
+                        sellersProducts.Add(product.SellersName, new List<string>());
+                    sellersProducts[product.SellersName].Add(product.Info);
+                    //if (sellersProducts[product.SellersName].Contains(product.Info)
+                }
+
+                //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
+                var sortedLists = _sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
+                var groupedShopping = new List<SearchResult>();
+                var groupedShoppingTmp = new List<SearchResult>();
+                var currentListCount = -1;
+                foreach (var list in sortedLists)
+                {
+                    if (list.Count != currentListCount)
+                    {
+                        currentListCount = list.Count;
+                        groupedShopping.AddRange(groupedShoppingTmp);
+                        groupedShoppingTmp = new List<SearchResult>();
+                    }
+
+                    foreach (var product in list)
+                    {
+                        if (groupedShoppingTmp.Any(p => p.Info == product.Info))
+                        {
+                            var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
+                            if (old.Price > product.Price)
+                            {
+                                groupedShoppingTmp.Remove(old);
+                                groupedShoppingTmp.Add(product.Clone());
+                            }
+                        }
+                        else
+                        {
+                            groupedShoppingTmp.Add(product.Clone());
+                        }
+                    }
+                }
+                groupedShopping.AddRange(groupedShoppingTmp);
+
+                RemoveShippingCostsForSameSeller(_cheapestSingleResults);
+                RemoveShippingCostsForSameSeller(groupedShopping);
+
+                MultiplyByQty(_cheapestSingleResults, products);
+                MultiplyByQty(groupedShopping, products);
+
+                var groupedShoppingPrice = SumOrderPrice(groupedShopping);
+                var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
+
+                if (_cheapestSingleResults.Count == groupedShopping.Count)
+                {
+                    if (cheapestSinglePrice >= groupedShoppingPrice)
+                    {
+                        return groupedShopping;
+                    }
+                    else
+                    {
+                        return _cheapestSingleResults;
                     }
                 }
                 else
                 {
-                    _sellersProducts.Add(product.SellersName, new List<SearchResult>{ product});
-                }
-
-                //IGA
-                if (!sellersProducts.ContainsKey(product.SellersName))
-                    sellersProducts.Add(product.SellersName, new List<string>());
-                sellersProducts[product.SellersName].Add(product.Info);
-                //if (sellersProducts[product.SellersName].Contains(product.Info)
-            }
-
-            //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
-            var sortedLists =_sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
-            var groupedShopping = new List<SearchResult>();
-            var groupedShoppingTmp = new List<SearchResult>();
-            var currentListCount = -1;
-            foreach (var list in sortedLists)
-            {
-                if (list.Count != currentListCount)
-                {
-                    currentListCount = list.Count;
-                    groupedShopping.AddRange(groupedShoppingTmp);
-                    groupedShoppingTmp = new List<SearchResult>();
-                }
-                foreach (var product in list)
-                {
-                    if (groupedShoppingTmp.Any(p => p.Info == product.Info))
-                    {
-                        var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
-                        if (old.Price > product.Price)
-                        {
-                            groupedShoppingTmp.Remove(old);
-                            groupedShoppingTmp.Add(product);
-                        }
-                    }
-                    else
-                    {
-                        groupedShopping.Add(product);
-                    }
+                    return _cheapestSingleResults.Count >= groupedShopping.Count
+                        ? _cheapestSingleResults : groupedShopping;
                 }
             }
-            
-            RemoveShippingCostsForSameSeller(_cheapestSingleResults);
-            RemoveShippingCostsForSameSeller(groupedShopping);
-
-            MultiplyByQty(_cheapestSingleResults, products);
-            MultiplyByQty(groupedShopping, products);
-
-            var groupedShoppingPrice = SumOrderPrice(groupedShopping);
-            var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
-
-            if (cheapestSinglePrice >= groupedShoppingPrice)
+            catch (Exception e)
             {
-                return groupedShopping;
-            }
-            else
-            {
+                Log.Fatal(e.Message);
                 return _cheapestSingleResults;
             }
         }
@@ -136,7 +154,7 @@ namespace CeneoRest.Ceneo
         {
             foreach (var product in products)
             {
-               var result = searchResults.FirstOrDefault(r => r.Info != product.Name);
+               var result = searchResults.FirstOrDefault(r => r.Info == product.Name);
                if (result is null)
                {
                    searchResults.Add(new SearchResult{Name = product.Name, Info = "Nie znaleziono produktu dla podanych kryteriów"});
@@ -150,7 +168,8 @@ namespace CeneoRest.Ceneo
 
         private void RemoveEmptyProducts(List<ProductDto> products)
         {
-            foreach (var product in products)
+            var tmp = products.ToList();
+            foreach (var product in tmp)
             {
                 if (product?.Name is null || product?.Name == "")
                 {
@@ -353,6 +372,7 @@ namespace CeneoRest.Ceneo
                 var info = productDto.Name;
                 var searchResult = CreateSearchResult(shopsList[0], productDto.Name, info);
                 productSearchResults.Add(searchResult);
+                _allProducts.Add(searchResult);
             }
 
             _cheapestSingleResults.Add(productSearchResults[0]);
@@ -410,6 +430,7 @@ namespace CeneoRest.Ceneo
 
         private async Task<string> ScrapPage(string uri)
         {
+            Log.Information($"ScrapPage() Scraping page {uri}");
             var web = new HtmlWeb();
             var doc = await web.LoadFromWebAsync(uri);
             var content = doc.Text;

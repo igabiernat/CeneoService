@@ -13,5 +13,18 @@ namespace CeneoRest.Models
         public string Link { get; set; }
         public string Info { get; set; }
         public string SellersName { get; set; }
+
+        public SearchResult Clone()
+        {
+            return new SearchResult
+            {
+                Name = this.Name,
+                ShippingCost = this.ShippingCost,
+                Info = this.Info,
+                Price = this.Price,
+                SellersName = this.SellersName,
+                Link = this.Link
+            };
+        }
     }
 }
