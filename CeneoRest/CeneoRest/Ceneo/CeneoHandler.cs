@@ -39,9 +39,9 @@ namespace CeneoRest.Ceneo
             {
                 _errorCounter = 0;
                 _errorProductCounter = 0;
-                Log.Information($"{product.name} foreach start");
+                Log.Information($"{product.Name} foreach start");
                 await GetSearchResult(product);
-                Log.Information($"{product.name} foreach stop ");
+                Log.Information($"{product.Name} foreach stop ");
             }
 
             Log.Information("STOP");
@@ -116,6 +116,9 @@ namespace CeneoRest.Ceneo
             RemoveShippingCostsForSameSeller(_cheapestSingleResults);
             RemoveShippingCostsForSameSeller(groupedShopping);
 
+            MultiplyByQty(_cheapestSingleResults, products);
+            MultiplyByQty(groupedShopping, products);
+
             var groupedShoppingPrice = SumOrderPrice(groupedShopping);
             var cheapestSinglePrice = SumOrderPrice(_cheapestSingleResults);
 
@@ -129,11 +132,27 @@ namespace CeneoRest.Ceneo
             }
         }
 
+        private void MultiplyByQty(List<SearchResult> searchResults, List<ProductDto> products)
+        {
+            foreach (var product in products)
+            {
+               var result = searchResults.FirstOrDefault(r => r.Info != product.Name);
+               if (result is null)
+               {
+                   searchResults.Add(new SearchResult{Name = product.Name, Info = "Nie znaleziono produktu dla podanych kryteriów"});
+               }
+               else
+               {
+                result.Price *= product?.Num ?? 1;
+               }
+            }
+        }
+
         private void RemoveEmptyProducts(List<ProductDto> products)
         {
             foreach (var product in products)
             {
-                if (product.name is null || product.name == "")
+                if (product.Name is null || product.Name == "")
                 {
                     products.Remove(product);
                 }
@@ -184,13 +203,13 @@ namespace CeneoRest.Ceneo
                 var pageDocument = new HtmlDocument();
                 if (_mode == "offline")
                 {
-                    pageDocument.Load($"{productDto.name}.html");    //na razie z pliku
+                    pageDocument.Load($"{productDto.Name}.html");    //na razie z pliku
                 }
                 else
                 {
-                    var uri = $"http://ceneo.pl/szukaj-{productDto.name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
+                    var uri = $"http://ceneo.pl/szukaj-{productDto.Name.Replace(' ', '+')};m{productDto.MinPrice};n{productDto.MaxPrice};0112-0.htm";
                     var pageContents = await ScrapPage(uri);
-                    WriteHtmlToFile(productDto.name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
+                    WriteHtmlToFile(productDto.Name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                     pageDocument.LoadHtml(pageContents);
                 }
                 
@@ -200,7 +219,7 @@ namespace CeneoRest.Ceneo
             catch (Exception e)
             {
                 _errorCounter++;
-                Log.Error($"Error {_errorCounter} for {productDto.name} occured: {e.Message}");
+                Log.Error($"Error {_errorCounter} for {productDto.Name} occured: {e.Message}");
                 if (_errorCounter < Constants.ErrorsLimit)
                 {
                     await GetSearchResult(productDto);
@@ -255,13 +274,13 @@ namespace CeneoRest.Ceneo
             {
                 if (_mode == "offline")
                 {
-                    pageDocument.Load($"{productDto.name}_details.html");
+                    pageDocument.Load($"{productDto.Name}_details.html");
                 }
                 else
                 {
                     var uri = $"https://www.ceneo.pl{productId.Trim()}";
                     var pageContents = await ScrapPage(uri);
-                    WriteHtmlToFile($"{productDto.name}_{productId.Remove(0, 1)}", pageContents); //TODO DELETE BEFORE RELEASE
+                    WriteHtmlToFile($"{productDto.Name}_{productId.Remove(0, 1)}", pageContents); //TODO DELETE BEFORE RELEASE
                     pageDocument.LoadHtml(pageContents);
                 }
             }
@@ -321,7 +340,7 @@ namespace CeneoRest.Ceneo
                     .Descendants("h1").First(node => node.GetAttributeValue("class", "")
                         .Contains("product-name js_product-h1-link")).InnerText;
 
-                var info = productDto.name;
+                var info = productDto.Name;
 
                 var searchResult = CreateSearchResult(shopChosen, name, info);
                 productSearchResults.Add(searchResult);
@@ -331,8 +350,8 @@ namespace CeneoRest.Ceneo
 
             if (productSearchResults.Count == 0)
             {
-                var info = productDto.name;
-                var searchResult = CreateSearchResult(shopsList[0], productDto.name, info);
+                var info = productDto.Name;
+                var searchResult = CreateSearchResult(shopsList[0], productDto.Name, info);
                 productSearchResults.Add(searchResult);
             }
 

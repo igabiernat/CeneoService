@@ -7,10 +7,10 @@ namespace CeneoRest.Models
 {
     public class ProductDto
     {
-        public string name { get; set; }
-        public int? num { get; set; }
-        public Decimal? min_price { get; set; }
-        public Decimal? max_price { get; set; }
-        public Decimal? min_reputation { get; set; }
+        public string Name { get; set; }
+        public int? Num { get; set; }
+        public Decimal? MinPrice { get; set; }
+        public Decimal? MaxPrice { get; set; }
+        public Decimal? MinReputation { get; set; }
     }
 }
