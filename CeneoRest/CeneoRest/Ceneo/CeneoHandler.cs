@@ -152,7 +152,7 @@ namespace CeneoRest.Ceneo
         {
             foreach (var product in products)
             {
-                if (product.Name is null || product.Name == "")
+                if (product?.Name is null || product?.Name == "")
                 {
                     products.Remove(product);
                 }
