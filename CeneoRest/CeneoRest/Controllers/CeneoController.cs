@@ -35,15 +35,15 @@ namespace CeneoRest.Controllers
             var result = await _ceneoHandler.HandleSearchRequest(products, _config);
             return new JsonResult(result);
         }
-        [HttpGet("test")]
-        public async Task<IActionResult> Test()
+        [HttpPost("test")]
+        public async Task<IActionResult> Test([FromBody] List<ProductDto> products)
         {
-            var products = new List<ProductDto>
-            {
-                new ProductDto {Num = 2,max_price = 1000,min_price = 100,min_reputation = 4,Name = "telefon"},
-                new ProductDto {Num = 1,max_price = 100,min_price = 40,min_reputation = 1,Name = "etui+na+telefon"},
-                new ProductDto {Num = 3,max_price = 200, min_price = 10, min_reputation = 3, Name = "kubek"}
-            };
+            //var products = new List<ProductDto>
+            //{
+            //    new ProductDto {Num = 2,max_price = 1000,min_price = 100,min_reputation = 4,Name = "telefon"},
+            //    new ProductDto {Num = 1,max_price = 100,min_price = 40,min_reputation = 1,Name = "etui+na+telefon"},
+            //    new ProductDto {Num = 3,max_price = 200, min_price = 10, min_reputation = 3, Name = "kubek"}
+            //};
 
             var result = await _ceneoHandler.HandleSearchRequest(products, _config);
             return new JsonResult(result);

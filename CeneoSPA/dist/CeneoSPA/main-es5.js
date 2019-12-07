@@ -448,12 +448,12 @@
                     this.getCeneoApiInfo();
                 };
                 CeneoComponent.prototype.getCeneoApiInfo = function () {
-                    var _this = this;
-                    this.http.get('http://localhost:5000/api/ceneo').subscribe(function (response) {
-                        _this.ceneoApiInfo = response;
-                    }, function (error) {
-                        console.log(error);
-                    });
+                    // var _this = this;
+                    // this.http.get('http://localhost:5000/api/ceneo').subscribe(function (response) {
+                    //     _this.ceneoApiInfo = response;
+                    // }, function (error) {
+                    //     console.log(error);
+                    // });
                 };
                 return CeneoComponent;
             }());

@@ -401,14 +401,14 @@ let CeneoComponent = class CeneoComponent {
         this.http = http;
     }
     ngOnInit() {
-        this.getCeneoApiInfo();
+        //this.getCeneoApiInfo();
     }
     getCeneoApiInfo() {
-        this.http.get('http://localhost:5000/api/ceneo').subscribe(response => {
-            this.ceneoApiInfo = response;
-        }, error => {
-            console.log(error);
-        });
+        // this.http.get('http://localhost:5000/api/ceneo').subscribe(response => {
+        //     this.ceneoApiInfo = response;
+        // }, error => {
+        //     console.log(error);
+        // });
     }
 };
 CeneoComponent.ctorParameters = () => [

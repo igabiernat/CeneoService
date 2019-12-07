@@ -13,7 +13,8 @@ export class AppComponent implements OnInit{
   title = 'CeneoSPA';
   public search1 = true;
   public submit = false;
-  public note = false;
+  public note1 = false;
+  public note2 = false;
   public totalPrice;
   ceneoApiInfo: any;
   sumOfPrices: number[];
@@ -37,28 +38,24 @@ export class AppComponent implements OnInit{
 
 
   ngOnInit() {
-    this.getCeneoApiInfo();
+    //this.getCeneoApiInfo();
   }
 
 
   //## send data ##
   postOnCeneoApi(){
-    this.http.post('http://localhost:5000/api/ceneo/search', this.input).subscribe(
-      (val) => {
-          console.log("POST call successful value returned in body", 
-                      val);
-      },
-      response => {
-          console.log("POST call in error", response);
-      },
-      () => {
-          console.log("The POST observable is now completed.");
-      });
+    this.http.post('http://localhost:5000/api/ceneo/test', this.input).subscribe(response => {
+      this.ceneoApiInfo = response;
+      
+      //this.arrayResults = JSON.parse(this.ceneoApiInfo);
+    }, error => {
+      console.log(error);
+    });
   }
 
   //## get results ##
   getCeneoApiInfo(){
-    this.http.get('http://localhost:5000/api/ceneo/search').subscribe(response => {
+    this.http.get('http://localhost:5000/api/ceneo/test').subscribe(response => {
       this.ceneoApiInfo = response;
       
       //this.arrayResults = JSON.parse(this.ceneoApiInfo);
@@ -87,6 +84,7 @@ export class AppComponent implements OnInit{
   onClickMeBack(){
     this.search1 = true;
     this.submit = false;
+    this.ceneoApiInfo = "";
   }
 
   //## button submit, send data, change tab, receive results, summary-total price ##
@@ -113,11 +111,11 @@ export class AppComponent implements OnInit{
     this.product4.min_price = min4;
     this.product5.min_price = min5;
 
-    // max1 = (max1 == 0 ? min1 : max1 );
-    // max2 = (max2 == 0 ? min2 : max2 );
-    // max3 = (max3 == 0 ? min3 : max3 );
-    // max4 = (max4 == 0 ? min4 : max4 );
-    // max5 = (max5 == 0 ? min5 : max5 );
+    max1 = (max1 == 0 ? min1 : max1 );
+    max2 = (max2 == 0 ? min2 : max2 );
+    max3 = (max3 == 0 ? min3 : max3 );
+    max4 = (max4 == 0 ? min4 : max4 );
+    max5 = (max5 == 0 ? min5 : max5 );
 
     this.product1.max_price = max1;
     this.product2.max_price = max2;
@@ -126,13 +124,21 @@ export class AppComponent implements OnInit{
     this.product5.max_price = max5;
 
     //## price validation
-    if(min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
- 
-      this.note = true;
-      
+    if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5||min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
+      if(min1>max1||min2>max2||min3>max3||min4>max4||min5>max5){
+        this.note1 = true;
+      }else{
+        this.note1 = false;
+      }
+      if(min1<0||min2<0||min3<0||min4<0||min5<0||max1<0||max2<0||max3<0||max4<0||max5<0){
+        this.note2 = true;
+      }else{
+        this.note2 = false;
+      }
+
     }else{
-      this.note = false;
-      
+      this.note1 = false;
+      this.note2 = false;
 
 
       this.search1 = false;
