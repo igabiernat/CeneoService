@@ -31,6 +31,9 @@ namespace CeneoRest.Ceneo
         public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products, IConfiguration config)
         {
             _mode = config.GetSection("Mode").Value;
+
+            RemoveEmptyProducts(products);
+
             Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
@@ -110,6 +113,17 @@ namespace CeneoRest.Ceneo
             else
             {
                 return _cheapestSingleResults;
+            }
+        }
+
+        private void RemoveEmptyProducts(List<ProductDto> products)
+        {
+            foreach (var product in products)
+            {
+                if (product.name is null || product.name == "")
+                {
+                    products.Remove(product);
+                }
             }
         }
 
