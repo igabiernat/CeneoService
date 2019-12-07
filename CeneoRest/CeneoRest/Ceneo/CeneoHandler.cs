@@ -31,6 +31,9 @@ namespace CeneoRest.Ceneo
         public async Task<List<SearchResult>> HandleSearchRequest(List<ProductDto> products, IConfiguration config)
         {
             _mode = config.GetSection("Mode").Value;
+
+            RemoveEmptyProducts(products);
+
             Dictionary <string, List<string>> sellersProducts = new Dictionary<string, List<string>>();
             foreach (var product in products)
             {
@@ -82,16 +85,29 @@ namespace CeneoRest.Ceneo
             //Posortowanie słownika wg. długości list z produktami i przypisanie produktów.
             var sortedLists =_sellersProducts.Values.OrderByDescending(s => s.Count).ToList();
             var groupedShopping = new List<SearchResult>();
+            var groupedShoppingTmp = new List<SearchResult>();
+            var currentListCount = -1;
             foreach (var list in sortedLists)
             {
-                var currentListCount = list.Count;
+                if (list.Count != currentListCount)
+                {
+                    currentListCount = list.Count;
+                    groupedShopping.AddRange(groupedShoppingTmp);
+                    groupedShoppingTmp = new List<SearchResult>();
+                }
                 foreach (var product in list)
                 {
-                    if (groupedShopping.All(p => p.Info != product.Info))
+                    if (groupedShoppingTmp.Any(p => p.Info == product.Info))
                     {
-                        if (groupedShopping.Any(p => p.SellersName == product.SellersName))
-                            product.ShippingCost = 0;
-
+                        var old = groupedShoppingTmp.FirstOrDefault(p => p.Info == product.Info);
+                        if (old.Price > product.Price)
+                        {
+                            groupedShoppingTmp.Remove(old);
+                            groupedShoppingTmp.Add(product);
+                        }
+                    }
+                    else
+                    {
                         groupedShopping.Add(product);
                     }
                 }
@@ -110,6 +126,17 @@ namespace CeneoRest.Ceneo
             else
             {
                 return _cheapestSingleResults;
+            }
+        }
+
+        private void RemoveEmptyProducts(List<ProductDto> products)
+        {
+            foreach (var product in products)
+            {
+                if (product.name is null || product.name == "")
+                {
+                    products.Remove(product);
+                }
             }
         }
 
