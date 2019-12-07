@@ -207,7 +207,7 @@ namespace CeneoRest.Ceneo
                 }
                 else
                 {
-                    var uri = $"http://ceneo.pl/szukaj-{productDto.Name.Replace(' ', '+')};m{productDto.MinPrice};n{productDto.MaxPrice};0112-0.htm";
+                    var uri = $"http://ceneo.pl/szukaj-{productDto.Name.Replace(' ', '+')};m{productDto.min_price};n{productDto.max_price};0112-0.htm";
                     var pageContents = await ScrapPage(uri);
                     WriteHtmlToFile(productDto.Name.Trim(), pageContents); //TODO DELETE BEFORE RELEASE
                     pageDocument.LoadHtml(pageContents);

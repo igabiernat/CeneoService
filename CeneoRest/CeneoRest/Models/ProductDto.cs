@@ -9,8 +9,8 @@ namespace CeneoRest.Models
     {
         public string Name { get; set; }
         public int? Num { get; set; }
-        public Decimal? MinPrice { get; set; }
-        public Decimal? MaxPrice { get; set; }
-        public Decimal? MinReputation { get; set; }
+        public Decimal? min_price { get; set; }
+        public Decimal? max_price { get; set; }
+        public Decimal? min_reputation { get; set; }
     }
 }
