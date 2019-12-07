@@ -40,9 +40,9 @@ namespace CeneoRest.Controllers
         {
             var products = new List<ProductDto>
             {
-                new ProductDto {num = 2,max_price = 1000,min_price = 100,min_reputation = 4,name = "telefon"},
-                new ProductDto {num = 1,max_price = 100,min_price = 40,min_reputation = 1,name = "etui+na+telefon"},
-                new ProductDto {num = 3,max_price = 200, min_price = 10, min_reputation = 3, name = "kubek"}
+                new ProductDto {Num = 2,max_price = 1000,min_price = 100,min_reputation = 4,Name = "telefon"},
+                new ProductDto {Num = 1,max_price = 100,min_price = 40,min_reputation = 1,Name = "etui+na+telefon"},
+                new ProductDto {Num = 3,max_price = 200, min_price = 10, min_reputation = 3, Name = "kubek"}
             };
 
             var result = await _ceneoHandler.HandleSearchRequest(products, _config);
