@@ -9,8 +9,8 @@ import { AppComponent } from "src/app/app.component";
 })
 
 
-export class CeneoComponent implements OnInit {
-  // ceneoApiInfo: any;
+export class CeneoComponent {
+   //ceneoApiInfo: any;
   // product1 =  new Product();
   // product2 =  new Product();
   // product3 =  new Product();
@@ -31,22 +31,22 @@ export class CeneoComponent implements OnInit {
   //TODO: wartość submit to componentu app zaby
   //zmienic karte
   //TODO: obsługa odpowiedzi
-//   ngOnInit() {
-//     this.getCeneoApiInfo();
+//    ngOnInit() {
+//      this.getCeneoApiInfo();
 //   }
-//   postOnCeneoApi(){
-//     this.http.post('http://localhost:5000/api/ceneo', this.input).subscribe(
-//       (val) => {
-//           console.log("POST call successful value returned in body", 
-//                       val);
-//       },
-//       response => {
-//           console.log("POST call in error", response);
-//       },
-//       () => {
-//           console.log("The POST observable is now completed.");
-//       });
-//   }
+// //   postOnCeneoApi(){
+// //     this.http.post('http://localhost:5000/api/ceneo', this.input).subscribe(
+// //       (val) => {
+// //           console.log("POST call successful value returned in body", 
+// //                       val);
+// //       },
+// //       response => {
+// //           console.log("POST call in error", response);
+// //       },
+// //       () => {
+// //           console.log("The POST observable is now completed.");
+// //       });
+// //   }
 //   getCeneoApiInfo(){
 //     this.http.get('http://localhost:5000/api/ceneo').subscribe(response => {
 //       this.ceneoApiInfo = response;

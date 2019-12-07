@@ -37,13 +37,13 @@ export class AppComponent implements OnInit{
 
 
   ngOnInit() {
-    this.getCeneoApiInfo();
+    //this.getCeneoApiInfo();
   }
 
 
   //## send data ##
   postOnCeneoApi(){
-    this.http.post('http://localhost:5000/api/ceneo/test', this.input).subscribe(
+    this.http.post('http://localhost:5000/api/ceneo/search', this.input).subscribe(
       (val) => {
           console.log("POST call successful value returned in body", 
                       val);
